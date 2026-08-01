@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import { CATEGORIES } from '../content.config';
+import { CATEGORY_META, url } from '../lib/site';
+---
+
+<Base title="Page not found">
+  <div class="prose-wrap missing">
+    <p class="label">404</p>
+    <h1>That page isn&rsquo;t here.</h1>
+    <p class="missing__note">
+      It may have moved, or the link may be wrong. The four divisions are the best
+      place to pick things back up.
+    </p>
+    <ul class="missing__links">
+      {
+        CATEGORIES.map((c) => (
+          <li style={`--cat: var(--cat-${c})`}>
+            <a href={url(`/${c}`)}>{CATEGORY_META[c].label}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .missing {
+    padding-block: var(--s-9) var(--section-y);
+  }
+
+  .missing h1 {
+    font-size: var(--text-3xl);
+    letter-spacing: -0.038em;
+    margin-block: var(--s-3) var(--s-4);
+  }
+
+  .missing__note {
+    color: var(--ink-secondary);
+    max-width: 50ch;
+    margin-bottom: var(--s-6);
+  }
+
+  .missing__links {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--s-3);
+  }
+
+  .missing__links a {
+    display: inline-block;
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 560;
+    border-left: 2px solid var(--cat);
+    padding-left: var(--s-3);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .missing__links a:hover {
+    color: var(--link);
+  }
+</style>

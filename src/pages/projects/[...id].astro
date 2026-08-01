@@ -1,0 +1,45 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ProjectDetail from '../../components/ProjectDetail.astro';
+
+/**
+ * AutoOMR (`omr-project`) is excluded here on purpose: research currently has
+ * only this one project, so `/research` renders it directly (see
+ * [category].astro) instead of pointing at a separate one-item listing. This
+ * excludes that one slug, not the whole research category — if a second
+ * research project is ever added, it gets its own URL here as usual, and only
+ * `/research` itself needs a decision about which project leads.
+ */
+// Not annotated `: GetStaticPaths` on purpose; see the note in [category].astro.
+export const getStaticPaths = async () => {
+  const all = await getCollection('projects', ({ data, id }) => !data.draft && id !== 'omr-project');
+
+  return all.map((project) => {
+    // Neighbours within the same division, so a visitor who landed here from a
+    // direct link has somewhere to go that is not the back button.
+    const siblings = all
+      .filter((p) => p.data.category === project.data.category)
+      .sort((a, b) => b.data.weight - a.data.weight);
+    const at = siblings.findIndex((p) => p.id === project.id);
+
+    return {
+      params: { id: project.id },
+      props: {
+        project,
+        prev: siblings[at - 1] ?? null,
+        next: siblings[at + 1] ?? null,
+      },
+    };
+  });
+};
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { project, prev, next } = Astro.props as Props;
+---
+
+<Base title={project.data.title} description={project.data.summary}>
+  <ProjectDetail project={project} prev={prev} next={next} />
+</Base>

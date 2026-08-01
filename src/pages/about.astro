@@ -1,0 +1,159 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../lib/site';
+---
+
+<Base
+  title="About"
+  description={`${SITE.name} is a ${SITE.descriptor.toLowerCase()}, graduating ${SITE.gradYear}.`}
+>
+  <header class="head">
+    <div class="prose-wrap">
+      <h1>About</h1>
+    </div>
+  </header>
+
+  <div class="prose-wrap body">
+    {/*
+      Kevin: this page is deliberately short and factual, because everything here
+      is something you confirmed. Expand it in your own voice — the things a
+      reader cannot get from the project pages are the ones worth adding:
+
+        - how you got into robotics, and how that led into graphics
+        - why you kept building engines instead of using libraries
+        - what you want to work on at Purdue, and after
+        - anything outside engineering that matters to you
+
+      Keep it honest and specific. Do not add coursework, GPA, awards, or
+      positions that are not real — the project pages carry the proof and this
+      page only has to carry you.
+    */}
+
+    <p class="lede">
+      I&rsquo;m a computer science undergraduate at Purdue, graduating in {SITE.gradYear},
+      and most of what I build starts by working out the mathematics underneath it.
+    </p>
+
+    <p>
+      That began with games and simulations written in an environment with no
+      graphics, physics, or interface libraries available, so anything I wanted had
+      to be built: projection, collision, parsing, animation. It carried into
+      competition robotics with FIRST Tech Challenge, where the same instinct
+      applies to autonomous navigation and control, and more recently into a
+      computer-vision research project.
+    </p>
+
+    <h2>Where to find me</h2>
+
+    <ul class="links">
+      <li>
+        <a href={`mailto:${SITE.email}`}>
+          <Icon name="mail" size={18} />
+          <span>{SITE.email}</span>
+        </a>
+      </li>
+      <li>
+        <a href={SITE.github} rel="me noopener">
+          <Icon name="github" size={18} />
+          <span>github.com/kc0817</span>
+        </a>
+      </li>
+      <li>
+        <a href={SITE.linkedin} rel="me noopener">
+          <Icon name="linkedin" size={18} />
+          <span>LinkedIn</span>
+        </a>
+      </li>
+    </ul>
+
+    {
+      !SITE.resume && (
+        <p class="pending">
+          A current résumé is on its way onto this page.
+        </p>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--section-y) var(--s-6);
+    border-bottom: 1px solid var(--rule);
+    background: var(--ground-sunken);
+  }
+
+  .head h1 {
+    font-size: var(--text-3xl);
+    letter-spacing: -0.038em;
+  }
+
+  .body {
+    padding-block: var(--s-8) var(--section-y);
+  }
+
+  .lede {
+    font-size: var(--text-xl);
+    letter-spacing: var(--track-tight);
+    line-height: 1.42;
+    margin-bottom: var(--s-5);
+    border-top: 3px solid var(--accent-orange);
+    padding-top: var(--s-5);
+  }
+
+  .body p {
+    color: var(--ink-secondary);
+    margin-bottom: var(--s-4);
+  }
+
+  .lede {
+    color: var(--ink);
+  }
+
+  .body h2 {
+    font-size: var(--text-xl);
+    margin-top: var(--s-8);
+    margin-bottom: var(--s-4);
+  }
+
+  .links {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--s-3);
+  }
+
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-3);
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .links a span {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.24em;
+    transition: text-decoration-color var(--dur-fast) var(--ease-out);
+  }
+
+  .links a:hover span {
+    text-decoration-color: var(--accent-orange-deep);
+  }
+
+  .links svg {
+    color: var(--ink-tertiary);
+    flex: none;
+  }
+
+  .pending {
+    margin-top: var(--s-7);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--rule);
+    font-size: var(--text-sm);
+    color: var(--ink-tertiary);
+  }
+</style>

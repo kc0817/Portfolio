@@ -1,0 +1,127 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { url } from '../lib/site';
+import MediaSlot from './MediaSlot.astro';
+
+/**
+ * The photo owns the card; title and a one-line summary sit below it. With no
+ * poster set yet, the media area is graph-paper stock tinted from `--cat`
+ * rather than an empty or broken-looking box — a designed state, not a
+ * placeholder apology, that gets richer the moment a real photo lands in the
+ * project's frontmatter. `--cat` itself is never set here: the page rendering
+ * this card sets it once, to that division's single committed accent (see
+ * `PAGE_ACCENT` in `lib/site.ts`), so every card on a page agrees.
+ */
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const { data } = project;
+---
+
+<a class="card" href={url(`/projects/${project.id}`)}>
+  <div class="card__media">
+    <MediaSlot
+      image={data.poster}
+      alt={data.posterAlt ?? `${data.title} running`}
+      widths={[360, 540, 720]}
+      sizes="(min-width: 64rem) 24rem, (min-width: 40rem) 40vw, 90vw"
+    />
+  </div>
+
+  <div class="card__body">
+    <h3 class="card__title">{data.title}</h3>
+    <p class="card__summary">{data.summary}</p>
+
+    {
+      data.credentials.length > 0 && (
+        <ul class="card__credentials">
+          {data.credentials.map((c) => (
+            <li>{c}</li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</a>
+
+<style>
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--cat);
+    background: var(--ground-raised);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .card:hover,
+  .card:focus-visible {
+    border-color: color-mix(in srgb, var(--cat) 42%, var(--rule));
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .card__media {
+    aspect-ratio: 4 / 3;
+    background: var(--ground-sunken);
+  }
+
+  .card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--s-5);
+  }
+
+  .card__title {
+    font-size: var(--text-lg);
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    margin-bottom: var(--s-2);
+  }
+
+  .card:hover .card__title,
+  .card:focus-visible .card__title {
+    color: var(--link);
+  }
+
+  .card__summary {
+    color: var(--ink-secondary);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    /* Three lines, then cut cleanly — the full summary lives on the project
+       page, this is the skim. */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card__credentials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-1) var(--s-3);
+    list-style: none;
+    padding: 0;
+    margin-top: var(--s-3);
+  }
+
+  .card__credentials li {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--cat-deep);
+  }
+</style>

@@ -1,0 +1,97 @@
+---
+import '@fontsource-variable/archivo';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+import { SITE, url } from '../lib/site';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Suppresses the header's bottom rule where a full-bleed hero follows it. */
+  transparentHeader?: boolean;
+}
+
+const {
+  title,
+  description = `${SITE.descriptor}. Robotics, graphics, and research projects by ${SITE.name}.`,
+  transparentHeader = false,
+} = Astro.props;
+
+const pageTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.descriptor}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://kc0817.github.io');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    <link rel="sitemap" href={url('/sitemap-index.xml')} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta name="author" content={SITE.name} />
+    <meta name="theme-color" content="#f6f5f3" />
+  </head>
+  <body>
+    <!--
+      THESIS: A Purdue CS undergrad's project record that earns trust by making
+      depth of implementation visible — renderers, physics, parsers, path
+      followers, vision pipelines built where no library existed. It refuses the
+      undifferentiated nine-equal-cards grid; work is ranked and divided.
+      OWN-WORLD: Light only. Near-white ground, near-black ink, cool neutral
+      rules, Purdue old gold as material (rules, active marks, focus) never as
+      type; four muted division hues for wayfinding only. Archivo throughout,
+      JetBrains Mono for real data. One spacing rhythm, offset-plus-blur depth.
+      STORY: A visitor learns who Kevin is, sees four demos running, and enters
+      the division that matches what they came to evaluate.
+      FIRST VIEWPORT: Full-bleed portrait, "Hello everyone, I'm Kevin Chen"
+      overlaid lower-left with the standings line beneath; replay reel below.
+      FORM: The standing exit — the category standard, taken by the user over
+      assigned candidate 7. Seed key d5809468.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <a class="skip-link" href="#main">Skip to content</a>
+    <SiteHeader transparent={transparentHeader} />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+
+    <script>
+      // Applies the settle animation to major sections as they arrive. Entirely
+      // additive: the class is only ever added by this script, so a visitor
+      // without JavaScript gets every section in its finished state, and a
+      // visitor who never scrolls still sees the whole page.
+      const still = matchMedia('(prefers-reduced-motion: reduce)');
+
+      if ('IntersectionObserver' in window && !still.matches) {
+        const targets = document.querySelectorAll<HTMLElement>('main > section, main > article > section');
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add('settle');
+              observer.unobserve(entry.target);
+            }
+          },
+          { rootMargin: '0px 0px -12% 0px', threshold: 0.05 },
+        );
+
+        // The first section is already on screen at load; animating it would
+        // mean the page arrives mid-transition rather than composed.
+        [...targets].slice(1).forEach((el) => observer.observe(el));
+      }
+    </script>
+  </body>
+</html>

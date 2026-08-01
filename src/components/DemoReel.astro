@@ -1,0 +1,178 @@
+---
+import { CATEGORIES } from '../content.config';
+import { CATEGORY_META, url } from '../lib/site';
+import { DIVISION_IMAGE } from '../lib/divisionImages';
+import Icon from './Icon.astro';
+import MediaSlot from './MediaSlot.astro';
+
+/**
+ * Four static tiles, one per division, in a 2x2 grid. Each names the topic —
+ * not a specific project — so the tile stays accurate as projects are added
+ * or reordered within a division. Plain links throughout: there is no active
+ * state to switch, so no JavaScript is needed for this section to work. The
+ * same division photo (or its placeholder) reappears bigger at the top of
+ * that division's own page, via `PageIntro`.
+ */
+const divisions = CATEGORIES.map((category) => ({
+  category,
+  meta: CATEGORY_META[category],
+}));
+---
+
+<section class="reel" aria-labelledby="reel-heading">
+  <div class="wrap">
+    <h2 id="reel-heading">Project Overview</h2>
+
+    <div class="grid">
+      {
+        divisions.map(({ category, meta }) => (
+          <a class="tile" href={url(`/${category}`)}>
+            <div class="tile__media">
+              <MediaSlot
+                image={DIVISION_IMAGE[category]}
+                alt={`${meta.label} team photo`}
+                widths={[480, 720, 960]}
+                sizes="(min-width: 36rem) 50vw, 100vw"
+                iconSize={32}
+              />
+            </div>
+            <div class="tile__scrim" />
+            <div class="tile__body">
+              <h3 class="tile__title">{meta.label}</h3>
+              <p class="tile__blurb">{meta.blurb}</p>
+              <span class="tile__cta">
+                Explore {meta.label.toLowerCase()}
+                <Icon name="arrow-right" size={18} />
+              </span>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .reel {
+    padding-block: var(--section-y);
+  }
+
+  .grid {
+    margin-top: var(--s-6);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--s-5);
+  }
+
+  @media (min-width: 36rem) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--s-6);
+    }
+  }
+
+  /* ---- Tile ---------------------------------------------------------- */
+
+  /* One material for all four tiles — navy ground, orange rule — so the grid
+     reads as the site's two accents rather than four unrelated hues. Division
+     identity comes from the label and blurb, not from colour coding. The
+     photo (or its placeholder) sits behind everything; the scrim on top of it
+     is what keeps the navy identity and the text legible either way. */
+  .tile {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    padding: clamp(var(--s-5), 3vw, var(--s-7));
+    min-height: 14rem;
+    color: var(--ink-inverse);
+    text-decoration: none;
+    box-shadow: var(--shadow-lg);
+    border-top: 3px solid var(--accent-orange);
+    background: var(--ground-inverse);
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  .tile__media {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+
+  .tile__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--ground-inverse) 94%, black) 0%,
+      color-mix(in srgb, var(--ground-inverse) 60%, transparent) 55%,
+      color-mix(in srgb, var(--ground-inverse) 22%, transparent) 100%
+    );
+  }
+
+  @media (min-width: 36rem) {
+    .tile {
+      aspect-ratio: 4 / 3;
+      min-height: 0;
+    }
+  }
+
+  .tile:hover,
+  .tile:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--accent-orange) 45%, transparent);
+  }
+
+  /* Navy is both the tile's ground and the site's focus-ring colour, so on
+     this surface the ring needs the other accent to stay visible. */
+  .tile:focus-visible {
+    outline-color: var(--accent-orange);
+  }
+
+  .tile__body {
+    max-width: 34ch;
+  }
+
+  .tile__title {
+    font-size: var(--text-2xl);
+    letter-spacing: var(--track-display);
+    margin-bottom: var(--s-3);
+    color: var(--ink-inverse);
+  }
+
+  .tile__blurb {
+    color: rgba(247, 247, 246, 0.84);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    margin-bottom: var(--s-5);
+  }
+
+  .tile__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    font-weight: 560;
+    font-size: var(--text-sm);
+    color: var(--ink-inverse);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .tile:hover .tile__cta,
+  .tile:focus-visible .tile__cta {
+    color: var(--accent-orange);
+  }
+
+  .tile__cta svg {
+    transition: transform var(--dur-mid) var(--ease-out);
+  }
+
+  .tile:hover .tile__cta svg,
+  .tile:focus-visible .tile__cta svg {
+    transform: translateX(4px);
+  }
+</style>

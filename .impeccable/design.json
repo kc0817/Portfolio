@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T00:00:00.000Z",
+  "title": "Design System: Kevin Chen Portfolio",
+  "extensions": {
+    "colorMeta": {
+      "gold": {
+        "role": "primary",
+        "displayName": "Old Gold",
+        "canonical": "#cfb991",
+        "tonalRamp": ["#2b2314", "#4a3d21", "#6b5930", "#8c6d29", "#ab9264", "#cfb991", "#e2d3b6", "#f3ecdd"]
+      },
+      "gold-deep": {
+        "role": "primary",
+        "displayName": "Deep Gold",
+        "canonical": "#8c6d29",
+        "tonalRamp": ["#241b09", "#3d2e11", "#574119", "#705421", "#8c6d29", "#b09246", "#d2bc86", "#eee3c9"]
+      },
+      "link": {
+        "role": "secondary",
+        "displayName": "Record Blue",
+        "canonical": "#1c4fa8",
+        "tonalRamp": ["#0a1730", "#0f2455", "#13376f", "#17438c", "#1c4fa8", "#4577c7", "#8aa9e0", "#d3dff5"]
+      },
+      "division-robotics": {
+        "role": "tertiary",
+        "displayName": "Competition Red",
+        "canonical": "#b03b2e",
+        "tonalRamp": ["#2c0f0b", "#4a1913", "#68231b", "#8c2f24", "#b03b2e", "#cb6b5f", "#e2a79f", "#f6dfdb"]
+      },
+      "division-research": {
+        "role": "tertiary",
+        "displayName": "Measured Blue",
+        "canonical": "#2f5f8f",
+        "tonalRamp": ["#0c1822", "#152838", "#1f3d55", "#274d70", "#2f5f8f", "#5c85ac", "#95b1cb", "#dbe6ef"]
+      },
+      "division-math": {
+        "role": "tertiary",
+        "displayName": "Derivation Violet",
+        "canonical": "#6a5192",
+        "tonalRamp": ["#1a1426", "#2b213d", "#3d2f56", "#54406f", "#6a5192", "#8f7cae", "#b9adcb", "#e4deee"]
+      },
+      "division-games": {
+        "role": "tertiary",
+        "displayName": "Playfield Green",
+        "canonical": "#2d7a5f",
+        "tonalRamp": ["#0b1f18", "#123328", "#1a4939", "#22614c", "#2d7a5f", "#5a9d85", "#95c3b1", "#dcebe4"]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#fdfdfc",
+        "tonalRamp": ["#16181c", "#2c2f34", "#4e5259", "#6d7178", "#cbcbc6", "#e2e2df", "#f4f4f2", "#fdfdfc"]
+      },
+      "ground-sunken": {
+        "role": "neutral",
+        "displayName": "Sunken Paper",
+        "canonical": "#f4f4f2",
+        "tonalRamp": ["#16181c", "#2c2f34", "#4e5259", "#6d7178", "#cbcbc6", "#e2e2df", "#f4f4f2", "#fdfdfc"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#16181c",
+        "tonalRamp": ["#0a0b0d", "#16181c", "#2c2f34", "#4e5259", "#6d7178", "#a3a6ab", "#cbcbc6", "#e2e2df"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The name in the hero and division titles. One per page, never more."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Project titles."
+      },
+      "title": { "displayName": "Title", "purpose": "Section headings and list entry titles." },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All prose. Measure held to 68ch, summaries to 62ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Real reported values only — years, languages, ranks, counts, field labels. Never a texture for 'technical'."
+      }
+    },
+    "shadows": [
+      {
+        "name": "resting",
+        "value": "0 1px 2px rgba(22,24,28,0.06), 0 1px 1px rgba(22,24,28,0.04)",
+        "purpose": "A selector card or button that has been hovered or selected."
+      },
+      {
+        "name": "lifted",
+        "value": "0 4px 12px rgba(22,24,28,0.07), 0 1px 3px rgba(22,24,28,0.05)",
+        "purpose": "The primary button on hover and the skip link on focus."
+      },
+      {
+        "name": "stage",
+        "value": "0 12px 32px rgba(22,24,28,0.1), 0 3px 8px rgba(22,24,28,0.05)",
+        "purpose": "The demo reel stage only — the one element that is genuinely a screen."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Exponential ease-out; the default for every state change and entry."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+        "purpose": "Reserved for symmetric transitions."
+      },
+      { "name": "dur-fast", "value": "140ms", "purpose": "Hover and focus feedback." },
+      { "name": "dur-mid", "value": "260ms", "purpose": "Underline and marker reveals." },
+      {
+        "name": "dur-slow",
+        "value": "520ms",
+        "purpose": "The section settle and reel slide cross-fade."
+      }
+    ],
+    "surfaces": [
+      {
+        "name": "graph-paper",
+        "value": "repeating-linear-gradient(to right, rgba(22,24,28,.045) 0 1px, transparent 1px 1.75rem), repeating-linear-gradient(to bottom, rgba(22,24,28,.045) 0 1px, transparent 1px 1.75rem)",
+        "purpose": "Fixed notebook stock on body::before, masked to fade out by 76% down the viewport."
+      },
+      {
+        "name": "figure-ink",
+        "value": "rgba(22,24,28,0.1)",
+        "purpose": "Stroke for marginal line figures."
+      }
+    ],
+    "breakpoints": [
+      { "name": "wordmark-subtitle", "value": "22rem" },
+      { "name": "header-two-rows", "value": "32rem" },
+      { "name": "neighbours-pair", "value": "46rem" },
+      { "name": "list-metadata-column", "value": "52rem" },
+      { "name": "sticky-rail", "value": "58rem" },
+      { "name": "reel-side-selector", "value": "62rem" },
+      { "name": "marginalia", "value": "74rem" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The live demo action in a project page head. One per page.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M8 5.5v13l11-6.5z\"/></svg>Run the simulation</a>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem; border-radius: 6px; border: 1px solid #16181c; background: #16181c; color: #f7f7f6; font-family: 'Archivo Variable', system-ui, sans-serif; font-size: .8125rem; font-weight: 560; text-decoration: none; transition: box-shadow 140ms cubic-bezier(.16,1,.3,1), transform 140ms cubic-bezier(.16,1,.3,1); } .ds-btn-primary:hover { box-shadow: 0 4px 12px rgba(22,24,28,.07), 0 1px 3px rgba(22,24,28,.05); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid #1c4fa8; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Repository, paper, and video links beside the primary action.",
+      "html": "<a class=\"ds-btn-secondary\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14 4h6v6\"/><path d=\"M20 4l-9 9\"/><path d=\"M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4\"/></svg>Source</a>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem; border-radius: 6px; border: 1px solid #cbcbc6; background: #fff; color: #16181c; font-family: 'Archivo Variable', system-ui, sans-serif; font-size: .8125rem; font-weight: 560; text-decoration: none; transition: border-color 140ms cubic-bezier(.16,1,.3,1), box-shadow 140ms cubic-bezier(.16,1,.3,1), transform 140ms cubic-bezier(.16,1,.3,1); } .ds-btn-secondary:hover { border-color: #6d7178; box-shadow: 0 1px 2px rgba(22,24,28,.06); transform: translateY(-1px); } .ds-btn-secondary:focus-visible { outline: 2px solid #1c4fa8; outline-offset: 2px; }"
+    },
+    {
+      "name": "Division Selector",
+      "kind": "card",
+      "refersTo": "card-selector",
+      "description": "A division in the demo reel picker. Selected state tints from the division hue.",
+      "html": "<a class=\"ds-selector ds-selector--on\" href=\"#\" aria-current=\"true\"><span class=\"ds-selector__division\">Math Explorations</span><span class=\"ds-selector__project\">Procedurally Animated Spider</span></a>",
+      "css": ".ds-selector { display: grid; gap: .15em; padding: 1rem; border-radius: 6px; border: 1px solid #e2e2df; background: #fff; text-decoration: none; font-family: 'Archivo Variable', system-ui, sans-serif; transition: border-color 140ms cubic-bezier(.16,1,.3,1), background 140ms cubic-bezier(.16,1,.3,1), box-shadow 140ms cubic-bezier(.16,1,.3,1); } .ds-selector__division { font-weight: 600; letter-spacing: -.018em; color: #16181c; } .ds-selector__project { font-family: 'JetBrains Mono Variable', ui-monospace, monospace; font-size: .75rem; color: #6d7178; } .ds-selector:hover { border-color: #cbcbc6; box-shadow: 0 1px 2px rgba(22,24,28,.06); } .ds-selector--on { border-color: #b6a8c8; background: #f7f5fa; box-shadow: 0 1px 2px rgba(22,24,28,.06); }"
+    },
+    {
+      "name": "Ruled Project Entry",
+      "kind": "custom",
+      "description": "One entry in the ruled project list. The 2px division mark scales out of the leading edge on hover; the whole row is a click target.",
+      "html": "<ol class=\"ds-list\"><li class=\"ds-row\"><div><h3 class=\"ds-row__title\"><a href=\"#\">FTC 8393 — Decode</a></h3><p class=\"ds-row__summary\">Competition robot code for FIRST Tech Challenge team 8393.</p><ul class=\"ds-row__creds\"><li>Pennsylvania State Champion</li></ul></div><p class=\"ds-row__facts\">2025–2026 · Java</p></li></ol>",
+      "css": ".ds-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid #e2e2df; font-family: 'Archivo Variable', system-ui, sans-serif; } .ds-row { position: relative; display: grid; gap: .75rem; padding-block: 2rem; border-bottom: 1px solid #e2e2df; } .ds-row::before { content: ''; position: absolute; left: -1rem; top: 2rem; bottom: 2rem; width: 2px; background: #b03b2e; transform: scaleY(0); transform-origin: top; transition: transform 260ms cubic-bezier(.16,1,.3,1); } .ds-row:hover::before, .ds-row:focus-within::before { transform: scaleY(1); } .ds-row__title { font-size: 1.5rem; font-weight: 620; letter-spacing: -.018em; margin: 0 0 .5rem; } .ds-row__title a { color: #16181c; text-decoration: none; } .ds-row__title a::after { content: ''; position: absolute; inset: 0; } .ds-row__title a:hover { color: #1c4fa8; } .ds-row__summary { margin: 0; color: #4e5259; line-height: 1.62; } .ds-row__creds { display: flex; gap: 1rem; list-style: none; padding: 0; margin: .75rem 0 0; } .ds-row__creds li { font-family: 'JetBrains Mono Variable', ui-monospace, monospace; font-size: .75rem; font-weight: 500; color: #8c6d29; } .ds-row__facts { margin: 0; font-family: 'JetBrains Mono Variable', ui-monospace, monospace; font-size: .75rem; color: #6d7178; }"
+    },
+    {
+      "name": "Contribution Annotation",
+      "kind": "custom",
+      "refersTo": "aside-annotation",
+      "description": "Margin note made structural. Required on any project Kevin did not build alone.",
+      "html": "<aside class=\"ds-annotation\"><p class=\"ds-annotation__label\">My contribution</p><p class=\"ds-annotation__body\">Autonomous routines and path following.</p></aside>",
+      "css": ".ds-annotation { padding: 1.5rem; background: #f4f4f2; border-radius: 6px; border-top: 2px solid #cfb991; font-family: 'Archivo Variable', system-ui, sans-serif; } .ds-annotation__label { margin: 0 0 .5rem; font-family: 'JetBrains Mono Variable', ui-monospace, monospace; font-size: .75rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: #6d7178; } .ds-annotation__body { margin: 0; color: #16181c; line-height: 1.62; }"
+    },
+    {
+      "name": "Navigation Link",
+      "kind": "nav",
+      "description": "A division in the site header. The active mark is a 2px underline that scales from the left.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav__link ds-nav__link--on\" href=\"#\" aria-current=\"page\">Robotics</a><a class=\"ds-nav__link\" href=\"#\">Research</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 1.5rem; font-family: 'Archivo Variable', system-ui, sans-serif; } .ds-nav__link { position: relative; display: block; padding-block: .5rem; color: #4e5259; text-decoration: none; font-size: .8125rem; font-weight: 520; } .ds-nav__link::after { content: ''; position: absolute; inset-inline: 0; bottom: -2px; height: 2px; background: #cfb991; transform: scaleX(0); transform-origin: left; transition: transform 260ms cubic-bezier(.16,1,.3,1); } .ds-nav__link:hover, .ds-nav__link--on { color: #16181c; } .ds-nav__link--on::after, .ds-nav__link:hover::after { transform: scaleX(1); } .ds-nav__link--on::after { background: #b03b2e; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Working Notebook",
+    "overview": "This is the record an engineer keeps while building: ruled entries, real measurements, annotations in the margin where something needs saying. It is not a gallery and not a brochure. The reader is usually skimming — a recruiter with a minute, a faculty member reading harder — so the page's job is to let evidence be found fast and then reward someone who slows down.\n\nThe system is light by decision rather than by convention. Its use scene is a phone in an office and a laptop at a desk, both under room light, both reading rather than monitoring; a dark ground would have served neither. Structure comes from rules and tonal bands rather than from boxes, because the content is a long ranked list of real work and card grids flatten ranking into sameness. Purdue's old gold is the one non-neutral material, and it only ever marks.\n\nThe notebook is literal in three places and nowhere else: graph-paper stock that fades as you scroll into long reading, line figures sketched in the margins that are worked-out problems rather than decoration, and a gold-topped annotation block carrying contribution scope. What the system does not take from the notebook is untidiness — nothing is skewed, torn, taped, or set in a handwriting face.",
+    "keyCharacteristics": [
+      "Light ground, near-black ink, cool neutral rules; no dark mode",
+      "Ruled lists as the primary structure; cards only as selectors",
+      "One spacing rhythm across every surface, more space above a heading than below",
+      "Gold as material, never as type",
+      "Monospace strictly for real data — years, languages, ranks, counts",
+      "Graph-paper stock beneath everything, masked away before it can disturb reading",
+      "Marginal line figures drawn from Kevin's own problems, never stock engineering art",
+      "Every media-bearing surface is designed to be complete with no media present",
+      "Motion never hides content, on any surface, for any duration"
+    ],
+    "rules": [
+      {
+        "name": "The Gold-Is-Material Rule",
+        "body": "Old Gold is a rule, a border, or a highlight — never a letterform. At the sizes this system sets type, #cfb991 cannot hold 4.5:1 against paper, so if gold text is wanted the answer is Deep Gold or a different idea.",
+        "section": "colors"
+      },
+      {
+        "name": "The Wayfinding-Only Rule",
+        "body": "A division hue may tint a rule, a marker, a border, or a small label. It may not fill a region, a card, or a section background.",
+        "section": "colors"
+      },
+      {
+        "name": "The Blue-Means-Clickable Rule",
+        "body": "Record Blue appears on interactive text and nothing else. No decorative use, ever.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono-Means-Measured Rule",
+        "body": "JetBrains Mono appears only where a real value is reported. It is never a texture for 'technical'. If a mono label has no value behind it, it should be body text.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Eyebrow Rule",
+        "body": "No kicker or eyebrow line above a heading. Headings carry their own weight.",
+        "section": "typography"
+      },
+      {
+        "name": "The One-Rhythm Rule",
+        "body": "Every section break uses --section-y. A surface that needs to feel tighter or looser adjusts its internal padding, not the section rhythm.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-At-Rest Rule",
+        "body": "Surfaces are flat until something happens to them. The reel stage is the single exception, because it is a display.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Never-Hide-Content Rule",
+        "body": "No animation may start from opacity: 0, and no content may depend on script or scroll to become readable. The settle animation floors at 0.55 opacity, is applied only by JavaScript, is never applied to the first section on screen, and does nothing under prefers-reduced-motion.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the ruled list for any collection of work. It ranks; a grid does not.",
+      "Do state contribution scope on anything collaborative, in the annotation block.",
+      "Do design every media slot to look finished with nothing in it.",
+      "Do keep monospace tied to a real reported value.",
+      "Do put separation in a tonal band or a hairline before reaching for a shadow.",
+      "Do route every internal link through url() in src/lib/site.ts.",
+      "Do keep all four division destinations visible on mobile.",
+      "Do draw any new marginal figure from something Kevin actually built, at 1px on the 200-unit grid, and place it only where the paper is genuinely empty."
+    ],
+    "donts": [
+      "Don't set type in Old Gold (#cfb991); it cannot hold contrast. Use Deep Gold.",
+      "Don't fill a region with a division hue.",
+      "Don't add a dark mode. Light is a decision about the reading scene.",
+      "Don't introduce a card grid as page structure, or nest cards.",
+      "Don't add an eyebrow or kicker above a heading.",
+      "Don't use a zero-blur or zero-offset shadow; every shadow has both.",
+      "Don't write the header height as a literal anywhere — use --header-h.",
+      "Don't let the demo reel depend on JavaScript for its links to work.",
+      "Don't animate anything from opacity: 0, or let scroll position decide whether content is legible.",
+      "Don't add stock engineering decoration — gears, circuit traces, blueprints.",
+      "Don't place a marginal figure over a column that carries text.",
+      "Don't invent a competitive result, date, role, or metric."
+    ]
+  }
+}

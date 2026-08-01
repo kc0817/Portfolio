@@ -1,0 +1,166 @@
+---
+/**
+ * Notebook marginalia: line figures drawn in the margins the way they'd be
+ * sketched while working something out.
+ *
+ * Every figure is one of Kevin's own problems rather than stock engineering
+ * decoration — the ray fan is his raycaster, the linkage is the spider's leg
+ * solver, the arc is the shooting simulator, the contours are his Perlin field,
+ * the spline is the path follower, the cube is the 2x2 renderer. Generic gears
+ * would say "engineering"; these say what he actually built.
+ *
+ * Decorative and aria-hidden. They sit behind content at low contrast and are
+ * dropped entirely on small screens, where there is no margin to draw in.
+ */
+interface Props {
+  figure: 'rays' | 'linkage' | 'trajectory' | 'contours' | 'spline' | 'cube';
+  side?: 'left' | 'right';
+  /** Vertical placement within the parent section, as a percentage. */
+  top?: string;
+  size?: number;
+}
+
+const { figure, side = 'right', top = '12%', size = 300 } = Astro.props;
+---
+
+<div
+  class:list={['figure', `figure--${side}`]}
+  style={`--top: ${top}; --size: ${size}px`}
+  aria-hidden="true"
+>
+  <svg viewBox="0 0 200 200" fill="none" stroke="var(--figure-ink)" stroke-width="1">
+    {
+      figure === 'rays' && (
+        <>
+          {/* Raycaster: one ray per screen column, stopping at the wall it hits. */}
+          <circle cx="26" cy="100" r="3.5" fill="var(--figure-ink)" stroke="none" />
+          {Array.from({ length: 13 }, (_, i) => {
+            const a = (-42 + i * 7) * (Math.PI / 180);
+            const len = 132 / Math.cos(a);
+            return (
+              <line x1="26" y1="100" x2={26 + Math.cos(a) * len} y2={100 + Math.sin(a) * len} />
+            );
+          })}
+          <path d="M158 22 L158 178" stroke-width="1.75" />
+          <path d="M158 68 L184 60 L184 140 L158 132" stroke-dasharray="3 3" />
+        </>
+      )
+    }
+
+    {
+      figure === 'linkage' && (
+        <>
+          {/* Inverse kinematics: given the foot target, solve the joint angles. */}
+          <path d="M34 24 L92 78 L64 138 L128 168" stroke-width="1.5" />
+          <circle cx="34" cy="24" r="4" />
+          <circle cx="92" cy="78" r="4" />
+          <circle cx="64" cy="138" r="4" />
+          <circle cx="128" cy="168" r="5" fill="var(--figure-ink)" stroke="none" />
+          <path d="M92 78 A 30 30 0 0 1 70 104" stroke-dasharray="2 3" />
+          <path d="M64 138 A 26 26 0 0 0 88 154" stroke-dasharray="2 3" />
+          <path d="M12 182 L188 182" stroke-dasharray="5 4" />
+        </>
+      )
+    }
+
+    {
+      figure === 'trajectory' && (
+        <>
+          {/* Projectile arc with sampled points, checked against the target. */}
+          <path d="M20 172 Q 96 6 176 118" stroke-width="1.5" />
+          {[
+            [20, 172],
+            [58, 96],
+            [96, 62],
+            [134, 72],
+            [166, 106],
+          ].map(([x, y]) => (
+            <circle cx={x} cy={y} r="2.75" fill="var(--figure-ink)" stroke="none" />
+          ))}
+          <path d="M20 172 L20 120" stroke-dasharray="3 3" />
+          <path d="M176 118 L176 172 L20 172" stroke-dasharray="4 4" />
+          <circle cx="176" cy="118" r="9" stroke-dasharray="2 2" />
+        </>
+      )
+    }
+
+    {
+      figure === 'contours' && (
+        <>
+          {/* Perlin field as nested contour lines — smooth, not random. */}
+          <path d="M12 148 C 46 118 62 168 96 138 S 152 104 190 132" />
+          <path d="M12 120 C 50 86 66 140 100 108 S 154 74 190 104" />
+          <path d="M12 92 C 54 58 70 112 104 78 S 156 46 190 76" />
+          <path d="M12 64 C 58 32 74 84 108 50 S 158 20 190 48" />
+          <path d="M12 176 C 42 150 58 196 92 166 S 150 134 190 160" stroke-dasharray="3 3" />
+        </>
+      )
+    }
+
+    {
+      figure === 'spline' && (
+        <>
+          {/* Path follower: the spline plus the control points that shape it. */}
+          <path d="M22 168 C 62 168 40 52 100 52 S 138 156 180 116" stroke-width="1.5" />
+          <path d="M22 168 L62 168" stroke-dasharray="2 2" />
+          <path d="M100 52 L40 52" stroke-dasharray="2 2" />
+          <path d="M100 52 L138 156" stroke-dasharray="2 2" />
+          <rect x="58" y="164" width="8" height="8" />
+          <rect x="36" y="48" width="8" height="8" />
+          <rect x="134" y="152" width="8" height="8" />
+          <circle cx="22" cy="168" r="4" fill="var(--figure-ink)" stroke="none" />
+          <circle cx="100" cy="52" r="4" fill="var(--figure-ink)" stroke="none" />
+          <circle cx="180" cy="116" r="4" fill="var(--figure-ink)" stroke="none" />
+        </>
+      )
+    }
+
+    {
+      figure === 'cube' && (
+        <>
+          {/* The 2x2 in projection, with one layer lifted mid-turn. */}
+          <path d="M60 62 L100 40 L140 62 L100 84 Z" />
+          <path d="M60 62 L60 116 L100 138 L100 84 Z" />
+          <path d="M140 62 L140 116 L100 138 L100 84 Z" />
+          <path d="M80 51 L120 73" stroke-dasharray="2 2" />
+          <path d="M100 40 L100 84" stroke-dasharray="2 2" />
+          <path d="M60 89 L100 111 L140 89" stroke-dasharray="2 2" />
+          <path d="M52 34 L100 8 L148 34" stroke-dasharray="4 3" />
+          <path d="M100 8 L100 26" stroke-dasharray="2 2" />
+        </>
+      )
+    }
+  </svg>
+</div>
+
+<style>
+  .figure {
+    position: absolute;
+    top: var(--top);
+    width: var(--size);
+    height: var(--size);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .figure svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Hangs into the margin and off the edge, the way a sketch runs out of page. */
+  .figure--right {
+    right: calc(var(--size) * -0.22);
+  }
+
+  .figure--left {
+    left: calc(var(--size) * -0.22);
+  }
+
+  /* No margin to draw in below this, and the figures would sit under text. */
+  @media (max-width: 74rem) {
+    .figure {
+      display: none;
+    }
+  }
+</style>

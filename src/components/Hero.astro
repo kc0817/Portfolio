@@ -1,0 +1,223 @@
+---
+import { Image } from 'astro:assets';
+import { PORTRAIT as portrait } from '../lib/portrait';
+import Marginalia from './Marginalia.astro';
+
+/**
+ * The opening is the greeting and nothing else — no descriptor line, no
+ * credential row. Those claims live on the project pages, attached to the work
+ * that earned them.
+ *
+ * The hero composes two ways depending on whether `src/assets/hero.*` exists:
+ * full-bleed photograph with the introduction overlaid, or a typographic opening
+ * on the light ground. Both are designed states; neither is a placeholder.
+ */
+---
+
+<section class:list={['hero', portrait ? 'hero--photo' : 'hero--type']}>
+  {/* Only in the typographic opening: over a photograph a line figure would be
+      invisible at best and litter at worst, and the right half of the type
+      variant is the one large area of genuinely empty paper on the site. */}
+  {!portrait && <Marginalia figure="rays" side="right" top="16%" size={340} />}
+
+  {
+    portrait && (
+      <div class="hero__media">
+        <Image
+          src={portrait}
+          alt="Members of FIRST Tech Challenge team 22312 in BrainSTEM hoodies standing around their robot on a pit table at the Pennsylvania state championship, talking with a judge holding a clipboard."
+          widths={[640, 960, 1440, 1920, 2560]}
+          sizes="100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="hero__img"
+        />
+        <div class="hero__scrim" />
+      </div>
+    )
+  }
+
+  <div class="wrap hero__inner">
+    <h1 class="hero__greeting">
+      <span class="hero__hello">Hello everyone, I'm</span>
+      <span class="hero__name">Kevin Chen</span>
+    </h1>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    isolation: isolate;
+    overflow-x: clip;
+  }
+
+  /* ---- With a portrait: full-bleed, introduction overlaid ---------------- */
+
+  .hero--photo {
+    /* Pulls up under the sticky header so the photo starts at the very top. */
+    margin-top: calc(var(--header-h) * -1);
+    /* Fills the viewport exactly: the negative top margin puts the top edge under
+       the header, so 100svh lands the bottom edge on the bottom of the screen.
+       No max cap — a cap is what stopped it reaching the bottom on tall displays. */
+    min-height: 100svh;
+    color: var(--ink-inverse);
+  }
+
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  /* The faces sit in the upper third of the frame and the table and clipboard
+     fill the bottom, so the crop holds the top and loses the bottom. 22% rather
+     than `top` keeps a little headroom above the rafters instead of jamming the
+     heads against the header. */
+  .hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 22%;
+  }
+
+  /* The hero fills the viewport at every width, which is what was previewed and
+     accepted. On a phone that means a 3:2 frame in a tall viewport, so the crop
+     is severe horizontally and the bias moves right to hold the robot and the two
+     people facing it rather than centring on empty table.
+     To shorten the hero on phones instead, add `min-height: min(64svh, 34rem)`
+     here; nothing else depends on it. */
+  @media (max-width: 40rem) {
+    .hero__img {
+      object-position: 56% 26%;
+    }
+  }
+
+  /* Three stacked passes now that the greeting sits at the vertical middle
+     rather than the bottom-left corner: a left-to-right band darkens the
+     whole column the text runs down, evenly top to bottom; the diagonal pass
+     underneath still carries a lit-from-the-right feel into that column
+     rather than a flat vignette; the vertical pass keeps the very bottom
+     edge and the top rafters from going flat. */
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        to right,
+        rgba(12, 13, 16, 0.88) 0%,
+        rgba(12, 13, 16, 0.55) 32%,
+        rgba(12, 13, 16, 0) 62%
+      ),
+      linear-gradient(
+        to top right,
+        rgba(12, 13, 16, 0.85) 0%,
+        rgba(12, 13, 16, 0.45) 34%,
+        rgba(12, 13, 16, 0) 68%
+      ),
+      linear-gradient(
+        to top,
+        rgba(12, 13, 16, 0.4) 0%,
+        rgba(12, 13, 16, 0.1) 30%,
+        rgba(12, 13, 16, 0) 55%,
+        rgba(12, 13, 16, 0.18) 100%
+      );
+  }
+
+  /* The greeting sits at the vertical middle of the frame rather than at the
+     bottom. Centering the whole block — rather than the two lines separately —
+     keeps the existing grid gap between them and rules out any overlap
+     regardless of how tall the name renders at a given viewport width. */
+  .hero--photo .hero__inner {
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* ---- Without a portrait: typographic opening --------------------------- */
+
+  /* No photo means no reason to hold a near-empty viewport open: the type sets
+     the opening on its own and the reel should be close behind it. */
+  .hero--type {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* The greeting is now the whole opening, so it gets a little more room to
+     stand in than it needed when a descriptor and credential row sat below it. */
+  .hero--type .hero__inner {
+    padding-top: clamp(4rem, 10vw, 7.5rem);
+    padding-bottom: clamp(4rem, 10vw, 7.5rem);
+  }
+
+  /* ---- Shared type ------------------------------------------------------- */
+
+  .hero__inner {
+    width: 100%;
+  }
+
+  .hero__greeting {
+    display: grid;
+    gap: 0.1em;
+  }
+
+  /* Orange carries the secondary tier instead of translucency — the hue
+     difference against the name's ink-inverse white does the hierarchy
+     work on its own. */
+  .hero__hello {
+    font-size: var(--text-xl);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--accent-orange);
+  }
+
+  .hero__name {
+    font-size: var(--text-4xl);
+    font-weight: 680;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+
+  /* The one section exempt from the scroll-triggered .settle in Base.astro
+     (it's already on screen at load) gets its own arrival instead: the same
+     rise-and-fade the rest of the site uses, staggered across the two lines
+     so the name lands a beat after the greeting. Pure CSS and unconditional —
+     no IntersectionObserver needed since there's nothing to wait to scroll
+     into view. Plays regardless of prefers-reduced-motion: a deliberate call
+     for this one first-impression moment rather than the usual accessibility
+     default, since it's a single ~10px, half-second beat rather than
+     sustained or large-scale motion. The !important is required, not
+     stylistic — global.css's reduced-motion reset forces
+     `animation-duration: 0.01ms !important` on every element site-wide, and
+     only a higher-specificity !important rule can out-cascade an !important
+     one regardless of selector weight. Duration is --dur-slow doubled rather
+     than the token itself, since --dur-slow is shared with .settle
+     elsewhere on the site. */
+  .hero__hello,
+  .hero__name {
+    animation: hero-in calc(var(--dur-slow) * 2) var(--ease-out) both !important;
+  }
+
+  /* The stagger delay has to live inside its own !important shorthand too —
+     an !important shorthand always beats a plain longhand override
+     regardless of source order, so a bare `animation-delay: 100ms;` here
+     would lose to the 0s the rule above implies. */
+  .hero__name {
+    animation: hero-in calc(var(--dur-slow) * 2) var(--ease-out) 100ms both !important;
+  }
+
+  @keyframes hero-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+</style>

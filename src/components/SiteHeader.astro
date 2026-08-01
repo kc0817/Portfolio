@@ -1,0 +1,183 @@
+---
+import { CATEGORIES } from '../content.config';
+import { CATEGORY_META, SITE, url } from '../lib/site';
+
+interface Props {
+  transparent?: boolean;
+}
+const { transparent = false } = Astro.props;
+
+const here = Astro.url.pathname.replace(/\/$/, '');
+const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
+---
+
+<header class:list={['header', { 'header--transparent': transparent }]}>
+  <div class="wrap header__inner">
+    <a class="brand" href={url('/')}>
+      <span class="brand__name">{SITE.name}</span>
+      <span class="brand__sub">Purdue CS ’{String(SITE.gradYear).slice(2)}</span>
+    </a>
+
+    <nav aria-label="Divisions">
+      <ul class="nav">
+        {
+          CATEGORIES.map((c) => (
+            <li>
+              <a
+                href={url(`/${c}`)}
+                class:list={['nav__link', { 'nav__link--current': isCurrent(`/${c}`) }]}
+                aria-current={isCurrent(`/${c}`) ? 'page' : undefined}
+                style={`--cat: var(--cat-${c})`}
+              >
+                {CATEGORY_META[c].short}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a
+            href={url('/about')}
+            class:list={['nav__link', { 'nav__link--current': isCurrent('/about') }]}
+            aria-current={isCurrent('/about') ? 'page' : undefined}
+          >
+            About
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* Near-opaque rather than a light wash: at 86% the page's own headings read
+       straight through the bar as it passes over them, which looks like a
+       rendering fault rather than a material. */
+    background: color-mix(in srgb, var(--ground) 96%, transparent);
+    backdrop-filter: saturate(150%) blur(16px);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* Over a full-bleed hero the rule would cut the image, so it goes away and
+     the bar rides on the photo until the page scrolls. */
+  .header--transparent {
+    border-bottom-color: transparent;
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-5);
+    min-height: var(--header-h);
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  .brand__name {
+    font-weight: 640;
+    letter-spacing: var(--track-tight);
+    font-size: var(--text-lg);
+  }
+
+  .brand__sub {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(var(--s-3), 2vw, var(--s-5));
+    list-style: none;
+    padding: 0;
+  }
+
+  .nav__link {
+    position: relative;
+    display: block;
+    padding-block: var(--s-2);
+    color: var(--ink-secondary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: 520;
+    letter-spacing: 0.005em;
+    white-space: nowrap;
+  }
+
+  /* At rest the mark is orange when a page has no division, the division hue
+     when it does — so the current-page indicator tells you where you are
+     twice over. Hovering is a different signal than "you are here", so it
+     always shows the fixed accent orange regardless of division. */
+  .nav__link::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -2px;
+    height: 2px;
+    background: var(--cat, var(--accent-orange));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition:
+      transform var(--dur-mid) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+
+  .nav__link--current {
+    color: var(--ink);
+  }
+
+  .nav__link:hover {
+    color: var(--accent-orange);
+  }
+
+  .nav__link:hover::after,
+  .nav__link--current::after {
+    transform: scaleX(1);
+  }
+
+  .nav__link:hover::after {
+    background: var(--accent-orange);
+  }
+
+  /* Two rows on narrow phones: wordmark above, the five divisions spread across
+     their own line. Every destination stays visible and tappable — no drawer to
+     open, which matters when most arrivals are one-minute skims on a phone. */
+  @media (max-width: 32rem) {
+    .header__inner {
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: var(--s-1);
+      padding-block: var(--s-2);
+    }
+
+    .nav {
+      justify-content: space-between;
+      gap: var(--s-2);
+    }
+
+    .nav__link {
+      font-size: var(--text-xs);
+      letter-spacing: 0.01em;
+    }
+  }
+
+  @media (max-width: 22rem) {
+    .brand__sub {
+      display: none;
+    }
+  }
+</style>

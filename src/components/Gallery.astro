@@ -1,0 +1,42 @@
+---
+import MediaSlot from './MediaSlot.astro';
+
+/**
+ * A row of empty photo slots for media that has not been dropped in yet.
+ * Neutral graph-paper stock rather than a division tint, since a gallery
+ * isn't tied to one project — swap each slot for a real `<img>` as photos
+ * become available; nothing else about the layout needs to change.
+ */
+interface Props {
+  count: number;
+  label: string;
+}
+
+const { count, label } = Astro.props;
+const slots = Array.from({ length: count });
+---
+
+<div class="gallery" role="group" aria-label={label}>
+  {
+    slots.map(() => (
+      <div class="gallery__slot">
+        <MediaSlot iconSize={24} />
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: var(--s-4);
+  }
+
+  .gallery__slot {
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--rule-strong);
+    overflow: hidden;
+  }
+</style>

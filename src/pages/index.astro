@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import DemoReel from '../components/DemoReel.astro';
+import { PORTRAIT } from '../lib/portrait';
+---
+
+{/* The header only loses its rule when there is a photo for it to ride on. */}
+<Base transparentHeader={Boolean(PORTRAIT)}>
+  <Hero />
+  <DemoReel />
+</Base>

@@ -1,0 +1,82 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ProjectCard from './ProjectCard.astro';
+import Gallery from './Gallery.astro';
+
+/**
+ * Robotics gets a hand-curated arrangement instead of the generic grid: a
+ * photo gallery up top, then the two competition seasons paired, then the
+ * three subsystem write-ups. The slugs below are the one place this ordering
+ * lives — update them if a project file is renamed.
+ */
+interface Props {
+  projects: CollectionEntry<'projects'>[];
+}
+
+const { projects } = Astro.props;
+const find = (id: string) => projects.find((p) => p.id === id);
+
+const pair = [find('ftc-8393-decode'), find('ftc-22312-into-the-deep')].filter(
+  (p): p is CollectionEntry<'projects'> => Boolean(p),
+);
+
+const trio = [
+  find('sinusoidal-motion-profiler'),
+  find('swerve-drive'),
+  find('vertical-spindexing-algorithm'),
+].filter((p): p is CollectionEntry<'projects'> => Boolean(p));
+---
+
+<div class="showcase">
+  <div class="showcase__gallery">
+    <h2 class="showcase__gallery-label label">Robot Gallery</h2>
+    <Gallery count={5} label="Team and robot photos" />
+  </div>
+
+  {
+    pair.length > 0 && (
+      <div class="row row--pair">
+        {pair.map((project) => (
+          <ProjectCard project={project} />
+        ))}
+      </div>
+    )
+  }
+
+  {
+    trio.length > 0 && (
+      <div class="row row--trio">
+        {trio.map((project) => (
+          <ProjectCard project={project} />
+        ))}
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .showcase {
+    display: grid;
+    gap: var(--s-7);
+  }
+
+  .showcase__gallery-label {
+    margin-bottom: var(--s-4);
+  }
+
+  .row {
+    display: grid;
+    gap: var(--s-6);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 40rem) {
+    .row--pair {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .row--trio {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

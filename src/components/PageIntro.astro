@@ -1,0 +1,103 @@
+---
+import type { ImageMetadata } from 'astro';
+import MediaSlot from './MediaSlot.astro';
+import Marginalia from './Marginalia.astro';
+
+/**
+ * The first thing on every division page and every project page: a contained
+ * photo (never full-bleed — the point is a framed picture, not another hero),
+ * the title, then an Overview paragraph. Division pages pass no `eyebrow`,
+ * since the division name only needs a link back to itself on project pages.
+ */
+interface Props {
+  image: ImageMetadata | null;
+  alt: string;
+  title: string;
+  overview: string;
+  eyebrow?: { label: string; href: string };
+  figure?: 'rays' | 'linkage' | 'trajectory' | 'contours' | 'spline' | 'cube';
+}
+
+const { image, alt, title, overview, eyebrow, figure } = Astro.props;
+---
+
+<div class="wrap intro">
+  {figure && <Marginalia figure={figure} side="right" top="4%" size={260} />}
+
+  <div class="intro__media">
+    <MediaSlot image={image} alt={alt} widths={[640, 960, 1440]} sizes="(min-width: 74rem) 46rem, 90vw" iconSize={36} />
+  </div>
+
+  {
+    eyebrow && (
+      <a class="intro__eyebrow" href={eyebrow.href}>
+        {eyebrow.label}
+      </a>
+    )
+  }
+
+  <h1 class="intro__title">{title}</h1>
+
+  <section class="intro__overview">
+    <p class="intro__overview-label label">Overview</p>
+    <p class="intro__overview-text">{overview}</p>
+  </section>
+</div>
+
+<style>
+  .intro {
+    position: relative;
+    isolation: isolate;
+    overflow-x: clip;
+    padding-top: var(--section-y);
+  }
+
+  .intro__media {
+    max-width: 46rem;
+    margin-inline: auto;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--s-6);
+  }
+
+  .intro__eyebrow {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--cat);
+    text-decoration: none;
+    margin-bottom: var(--s-3);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+
+  .intro__eyebrow:hover {
+    border-bottom-color: currentColor;
+  }
+
+  .intro__title {
+    font-size: var(--text-3xl);
+    letter-spacing: -0.038em;
+    line-height: 1;
+    margin-bottom: var(--s-5);
+    max-width: 26ch;
+  }
+
+  .intro__overview {
+    margin-bottom: var(--s-7);
+  }
+
+  .intro__overview-label {
+    margin-bottom: var(--s-2);
+  }
+
+  .intro__overview-text {
+    font-size: var(--text-lg);
+    color: var(--ink-secondary);
+  }
+</style>

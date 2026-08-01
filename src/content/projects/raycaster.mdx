@@ -1,0 +1,24 @@
+---
+title: 'Raycaster'
+category: math
+summary: 'A Doom-style 3D renderer that draws a first-person view by casting a ray per screen column, built in an environment with no 3D support.'
+weight: 80
+stack: ['Python', 'CMU CS Academy']
+links:
+  - kind: demo
+    href: 'https://academy.cs.cmu.edu/sharing/honeydewGoat4892'
+    label: 'Run the demo'
+---
+
+{/* Kevin: raycasting is a genuinely elegant trick and most people do not know
+    how it works. Worth explaining:
+      - one ray per screen column, wall height from ray distance
+      - why that produces a 3D-looking scene from a 2D map
+      - the fisheye correction, if you did it
+      - what the technique cannot do, and why Doom used it anyway */}
+
+## What it does
+
+Renders a first-person three-dimensional view of a level by casting one ray per
+column of the screen and deriving wall height from how far each ray travelled
+before hitting something — the same technique behind Doom-era renderers.

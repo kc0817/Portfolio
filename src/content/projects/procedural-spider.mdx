@@ -1,0 +1,28 @@
+---
+title: 'Procedurally Animated Spider'
+category: math
+summary: 'A 3D spider that walks over arbitrary terrain using inverse kinematics for its legs and a custom latching algorithm to choose where each foot lands, while pathfinding toward the player.'
+weight: 85
+stack: ['Java', 'Swing', '3D inverse kinematics', 'Flood fill']
+sourceLost: true
+links:
+  - kind: demo
+    href: 'https://kc0817.itch.io/3d-procedurally-animated-spider'
+    label: 'Run the simulation'
+---
+
+{/* Kevin: the most visually striking thing you have made, which is why it leads
+    the Math Explorations division on the home page. Worth covering:
+      - what inverse kinematics is solving for, in plain language: given where
+        the foot must go, find the joint angles
+      - why the flood fill needed modifying to search only ground-adjacent tiles
+      - how the latching algorithm decides a foot has to move, and where to
+      - why procedural animation beats hand-keyframed walking on uneven ground */}
+
+## What it does
+
+- Modified flood-fill pathfinding that searches only tiles beside ground
+- 3D inverse kinematics driving the leg joints
+- A custom latching algorithm deciding where each foot should be placed
+- Tile-based player collision
+- Interface built with Java Swing

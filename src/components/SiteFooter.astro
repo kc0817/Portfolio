@@ -1,0 +1,123 @@
+---
+import Icon from './Icon.astro';
+import { SITE } from '../lib/site';
+---
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="footer__lead">
+      <h2 class="footer__title">Get in touch</h2>
+      <p class="footer__note">
+        I'm looking for internships and research opportunities. The fastest way to
+        reach me is email.
+      </p>
+    </div>
+
+    <ul class="footer__links">
+      <li>
+        <a href={`mailto:${SITE.email}`}>
+          <Icon name="mail" size={18} />
+          <span>{SITE.email}</span>
+        </a>
+      </li>
+      <li>
+        <a href={SITE.github} rel="me noopener">
+          <Icon name="github" size={18} />
+          <span>github.com/kc0817</span>
+        </a>
+      </li>
+      <li>
+        <a href={SITE.linkedin} rel="me noopener">
+          <Icon name="linkedin" size={18} />
+          <span>LinkedIn</span>
+        </a>
+      </li>
+      {
+        SITE.resume && (
+          <li>
+            <a href={SITE.resume}>
+              <Icon name="file" size={18} />
+              <span>Résumé</span>
+            </a>
+          </li>
+        )
+      }
+    </ul>
+  </div>
+
+  <div class="wrap footer__base">
+    <p class="label">{SITE.school} · Computer Science · Class of {SITE.gradYear}</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: auto;
+    padding-top: var(--section-y);
+    background: var(--ground-sunken);
+    border-top: 1px solid var(--rule);
+  }
+
+  .footer__inner {
+    display: grid;
+    gap: var(--s-7);
+    grid-template-columns: 1fr;
+    padding-bottom: var(--s-8);
+  }
+
+  @media (min-width: 48rem) {
+    .footer__inner {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: var(--s-9);
+    }
+  }
+
+  .footer__title {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--s-3);
+  }
+
+  .footer__note {
+    color: var(--ink-secondary);
+    max-width: 34ch;
+  }
+
+  .footer__links {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--s-3);
+  }
+
+  .footer__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-3);
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .footer__links a span {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.24em;
+    transition: text-decoration-color var(--dur-fast) var(--ease-out);
+  }
+
+  .footer__links a:hover span {
+    text-decoration-color: var(--accent-orange-deep);
+  }
+
+  .footer__links svg {
+    color: var(--ink-tertiary);
+    flex: none;
+  }
+
+  .footer__base {
+    padding-block: var(--s-5);
+    border-top: 1px solid var(--rule);
+  }
+</style>

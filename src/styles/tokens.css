@@ -1,0 +1,126 @@
+/*
+  Light-only by decision, not by default. The use scene is a recruiter opening a
+  resume link on a phone in an office, and a graduate reader working through
+  project pages at a desk — both under ambient room light, both reading rather
+  than monitoring. A dark ground would serve neither.
+
+  Two accents carry the identity: deep navy for structure — links, focus, the
+  primary action, the inverse ground — and burnt orange as the material that
+  rules, underlines, and marks what is active. Orange never carries type at
+  full strength; its deep variant exists for that.
+*/
+
+:root {
+  /* ---- Ground and ink -------------------------------------------------- */
+  --ground: #f6f5f3;
+  --ground-raised: #ffffff;
+  --ground-sunken: #ece9e6;
+  --ground-inverse: var(--accent-navy);
+
+  --ink: #16181c;          /* 15.8:1 on ground */
+  --ink-secondary: #4e5259; /* 7.9:1  on ground */
+  --ink-tertiary: #6d7178;  /* 5.1:1  on ground — floor for body-size text */
+  --ink-inverse: #f7f7f6;
+
+  --rule: #e2e2df;
+  --rule-strong: #cbcbc6;
+
+  /* Notebook ruling. Deliberately near the threshold of visibility: it should
+     register as paper stock, not as a grid you read. */
+  --grid-line: rgba(22, 24, 28, 0.045);
+  --grid-step: 1.75rem;
+  --figure-ink: rgba(22, 24, 28, 0.1);
+
+  /* ---- Accent ---------------------------------------------------------- */
+  --accent-navy: #25395a;       /* 10.6:1 on ground — links, focus, primary fill */
+  --accent-navy-deep: #16233a; /* hover/pressed navy */
+  --accent-orange: #d9762f;    /* material only — rules, borders, selection */
+  --accent-orange-deep: #a8531f; /* 4.9:1 on ground — the type-safe orange */
+
+  --link: var(--accent-navy);
+  --link-hover: var(--accent-navy-deep);
+
+  /* ---- Division coding ------------------------------------------------- */
+  /* Wayfinding only: a rule, a dot, a label. Never a filled region, because
+     four saturated fields would fight the reading this site is built for. */
+  --cat-robotics: #b03b2e;
+  --cat-research: #2f5f8f;
+  --cat-math: #6a5192;
+  --cat-games: #2d7a5f;
+
+  /* ---- Type ------------------------------------------------------------ */
+  --font-sans: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Fluid scale. Display caps below the 6rem ceiling so a long project title
+     cannot run off a phone. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 1.0625rem;
+  --text-lg: clamp(1.125rem, 0.4vw + 1.05rem, 1.3125rem);
+  --text-xl: clamp(1.375rem, 1vw + 1.1rem, 1.75rem);
+  --text-2xl: clamp(1.75rem, 2vw + 1.25rem, 2.5rem);
+  --text-3xl: clamp(2.25rem, 3.6vw + 1.4rem, 3.75rem);
+  --text-4xl: clamp(2.75rem, 6vw + 1.25rem, 5.5rem);
+
+  --leading-tight: 1.04;
+  --leading-snug: 1.2;
+  --leading-normal: 1.62;
+
+  --track-display: -0.032em;
+  --track-tight: -0.018em;
+  --track-label: 0.08em;
+
+  --measure: 68ch;
+
+  /* ---- Spacing --------------------------------------------------------- */
+  /* One rhythm across the whole site. Section padding is fluid so the page
+     breathes on a desktop without wasting a phone's vertical budget. */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+  --section-y: clamp(3.5rem, 7vw, 7rem);
+
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --page-max: 78rem;
+  --prose-max: 42rem;
+
+  /* Single source of truth for the sticky header's height. Three things depend
+     on it — the bar itself, the photo hero that slides underneath it, and
+     anchor scroll offset — so it must not be written as a literal anywhere. */
+  --header-h: 3.75rem;
+
+  /* ---- Depth ----------------------------------------------------------- */
+  /* Offset plus blur, tinted from the ink rather than pure black, so raised
+     surfaces sit on the page instead of glowing off it. */
+  --shadow-sm: 0 1px 2px rgba(22, 24, 28, 0.06), 0 1px 1px rgba(22, 24, 28, 0.04);
+  --shadow-md: 0 4px 12px rgba(22, 24, 28, 0.07), 0 1px 3px rgba(22, 24, 28, 0.05);
+  --shadow-lg: 0 12px 32px rgba(22, 24, 28, 0.1), 0 3px 8px rgba(22, 24, 28, 0.05);
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* ---- Motion ---------------------------------------------------------- */
+  /* Exponential ease-out. Everything starts visible; motion refines arrival,
+     it never gates content. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-mid: 260ms;
+  --dur-slow: 520ms;
+}
+
+/* Below this the five division links plus the wordmark cannot share one line at
+   320px without overflowing, so the header becomes two rows and grows. */
+@media (max-width: 32rem) {
+  :root {
+    --header-h: 5.75rem;
+  }
+}

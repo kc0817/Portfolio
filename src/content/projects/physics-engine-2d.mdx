@@ -1,0 +1,32 @@
+---
+title: '2D Physics Engine'
+category: math
+summary: 'A rigid-body physics engine where higher-order behaviour like rolling emerges from friction rather than being special-cased, with live graphs of energy loss and momentum conservation.'
+weight: 90
+period: 'AP Physics 1 & 2 final project'
+stack: ['Separating Axis Theorem', 'Rigid-body dynamics']
+sourceLost: true
+links:
+  - kind: demo
+    href: 'https://kc0817.itch.io/2d-physics-sim'
+    label: 'Run the simulation'
+---
+
+{/* Kevin: your own README bullets are already strong here — the emergent-rolling
+    point especially, because it is the difference between simulating physics and
+    faking it. Worth expanding on:
+      - why SAT for irregular polygon collision, and what it does
+      - how rolling actually falls out of friction rather than being coded
+      - what the energy and momentum graphs revealed about the integrator
+      - which parameters are exposed and what breaks at their extremes */}
+
+## What it does
+
+- Natural phenomena arise from first physics principles — rolling emerges from
+  friction rather than being implemented directly
+- Graph visualisation for energy loss and momentum conservation
+- Telemetry interface for inspecting object state
+- Parameterised environment variables: gravity, restitution, friction
+- Separating Axis Theorem collision detection for irregular polygons
+
+Built as a final project for AP Physics 1 & 2.

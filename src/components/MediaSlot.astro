@@ -1,0 +1,61 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+
+/**
+ * One image-or-placeholder renderer, used everywhere a photo may not exist
+ * yet: project cards, the gallery slots, the home division tiles, and the
+ * big intro image on topic and project pages. The placeholder is graph-paper
+ * stock — the same material the page itself sits on — tinted from whatever
+ * `--cat` is in scope, so an empty slot still carries identity instead of
+ * reading as broken or unfinished. Swap in a real image and nothing else
+ * about the surrounding layout has to change.
+ */
+interface Props {
+  image?: ImageMetadata | null;
+  alt?: string;
+  widths?: number[];
+  sizes?: string;
+  iconSize?: number;
+}
+
+const {
+  image = null,
+  alt = '',
+  widths = [400, 600, 900],
+  sizes = '100vw',
+  iconSize = 28,
+} = Astro.props;
+---
+
+{
+  image ? (
+    <Image src={image} alt={alt} widths={widths} sizes={sizes} class="media-slot__img" />
+  ) : (
+    <div class="media-slot__placeholder" aria-hidden="true">
+      <Icon name="image" size={iconSize} />
+    </div>
+  )
+}
+
+<style>
+  .media-slot__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .media-slot__placeholder {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: var(--ink-tertiary);
+    background:
+      repeating-linear-gradient(to right, var(--grid-line) 0 1px, transparent 1px var(--grid-step)),
+      repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px var(--grid-step)),
+      color-mix(in srgb, var(--cat, transparent) 7%, var(--ground-sunken));
+  }
+</style>

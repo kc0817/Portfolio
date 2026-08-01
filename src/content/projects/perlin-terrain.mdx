@@ -1,0 +1,22 @@
+---
+title: 'Perlin Noise Terrain Generator'
+category: math
+summary: 'Procedural terrain built on a Perlin noise implementation written from scratch, with adjustable octaves and colour mapping.'
+weight: 70
+stack: ['Python', 'CMU CS Academy', 'Perlin noise']
+links:
+  - kind: demo
+    href: 'https://academy.cs.cmu.edu/sharing/slateGraySheep007178'
+    label: 'Generate terrain'
+---
+
+{/* Kevin: worth explaining what makes Perlin noise different from random noise —
+    that it is smooth and locally coherent, which is why it looks like terrain
+    instead of static. Then what octaves do: each added octave is finer detail at
+    lower amplitude, which is why more octaves read as roughness. */}
+
+## What it does
+
+Generates terrain from a from-scratch Perlin noise implementation, with
+customisable octaves controlling how much fine detail accumulates and a colour
+map turning height into readable landscape.
