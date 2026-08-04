@@ -16,9 +16,12 @@ draft: true
     URLs, periods, or credentials for them. This file is `draft: true`, which
     means it does not appear anywhere on the site.
 
-    When the repos are public, copy `ftc-8393-decode.mdx` once per project,
-    fill in the real URL and your role, and delete this file. Nothing else
-    needs changing — the category pages pick them up automatically.
+    When the repos are public, copy `ballistic-physics-solver.mdx` once per
+    project and fill in the real URL and your role. Note that adding a file is no
+    longer enough on its own: the home page's three sections are hand-arranged in
+    `src/components/Portfolio.astro`, so a new project also needs its slug listed
+    in the row it belongs to. That is deliberate — the rows are curated, not a
+    weight sort — but it does mean two files to touch instead of one.
 
     If any of them stay private, that is fine and expected for competition
     code: write the entry with no `repo` link at all. The project pages are

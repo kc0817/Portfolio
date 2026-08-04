@@ -1,8 +1,8 @@
 ---
-title: '2D Physics Engine'
+title: 'Physics Collision Engine'
 category: math
-summary: 'A rigid-body physics engine where higher-order behaviour like rolling emerges from friction rather than being special-cased, with live graphs of energy loss and momentum conservation.'
-weight: 90
+summary: 'A rigid-body collision engine built on the Separating Axis Theorem, where higher-order behaviour like rolling emerges from friction rather than being special-cased, with live graphs of energy loss and momentum conservation.'
+weight: 80
 period: 'AP Physics 1 & 2 final project'
 stack: ['Separating Axis Theorem', 'Rigid-body dynamics']
 sourceLost: true
@@ -12,9 +12,14 @@ links:
     label: 'Run the simulation'
 ---
 
-{/* Kevin: your own README bullets are already strong here — the emergent-rolling
-    point especially, because it is the difference between simulating physics and
-    faking it. Worth expanding on:
+{/* Kevin: the other card with no footage behind it — it rests on the placeholder
+    field in the Math Explorations row until a clip lands. Adding one is a single
+    entry in `src/lib/projectMedia.ts` keyed `physics-collision-engine`; see that
+    file's header for the cut it wants.
+
+    Your own README bullets are already strong here — the emergent-rolling point
+    especially, because it is the difference between simulating physics and faking
+    it. Worth expanding on:
       - why SAT for irregular polygon collision, and what it does
       - how rolling actually falls out of friction rather than being coded
       - what the energy and momentum graphs revealed about the integrator

@@ -1,0 +1,47 @@
+---
+title: 'Vision-based Piece Collection'
+category: robotics
+summary: 'Vision-guided sample collection for team 22312: the robot finds a game piece with a Limelight camera, drives itself into position, and picks it up — on the autonomous that ranked first in Pennsylvania.'
+weight: 90
+period: '2024–2025'
+stack: ['Java', 'FTC SDK', 'Android Studio', 'Limelight']
+credentials:
+  - '#1 Autonomous in Pennsylvania'
+role: 'Lead software developer for BrainSTEM''s FTC and FRC programs, 2024–2026.'
+collaborative:
+  owner: 'BrainStem FIRST'
+  ownerUrl: 'https://github.com/BrainStem-FIRST'
+links:
+  - kind: repo
+    href: 'https://github.com/BrainStem-FIRST/22312-into-the-deep-v1.5'
+    label: 'Robot code'
+---
+
+{/* Kevin: two things to confirm before this page is finished:
+
+      - `Limelight` is now in the stack list, and the summary says the camera is a
+        Limelight, because that is what the clip's description says. If the vision
+        actually ran on something else, fix both.
+      - `role` is your own sentence from the home page's FIRST Robotics blurb. If
+        you owned autonomous specifically, that is the stronger and more precise
+        claim here — the #1 autonomous ranking suggests it. Say so if it is true.
+
+    Then the writing. The #1 autonomous ranking is the hook, so it is worth
+    explaining what made this better than everyone else's:
+      - what the camera gives you, and what it does not — a pixel offset is not a
+        field position, so what closed that gap?
+      - how the robot decides which piece to go for when it can see several
+      - what happens when the vision loses the piece mid-approach
+      - consistency under field variation: lighting, a piece nudged off its mark,
+        a bad start position */}
+
+## What the code does
+
+Robot control code for the Into the Deep season, covering autonomous routines and
+driver-controlled operation. The collection routine is the vision-driven part: the
+camera locates a sample on the field, and the robot closes on it and collects it
+without a driver lining the shot up by hand.
+
+## Results
+
+Ranked first in autonomous in Pennsylvania.

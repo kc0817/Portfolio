@@ -152,7 +152,9 @@ const DEVICES = [
       const slots = [...document.querySelectorAll<HTMLElement>('[data-slot]')];
       const heights = new WeakMap<HTMLIFrameElement, number>();
       let deviceWidth = 1440;
-      let pending = 0;
+      // `ReturnType`, not `number`: TypeScript resolves `setTimeout` here to the
+      // Node overload, which returns a Timeout object rather than a handle id.
+      let pending: ReturnType<typeof setTimeout> | undefined;
       let retries = 0;
 
       // Fitting a slot changes its height, which changes the page height. Every

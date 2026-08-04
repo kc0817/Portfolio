@@ -5,20 +5,24 @@ import Base from '../../layouts/Base.astro';
 import ProjectDetail from '../../components/ProjectDetail.astro';
 
 /**
- * AutoOMR (`omr-project`) is excluded here on purpose: research currently has
- * only this one project, so `/research` renders it directly (see
- * [category].astro) instead of pointing at a separate one-item listing. This
- * excludes that one slug, not the whole research category — if a second
- * research project is ever added, it gets its own URL here as usual, and only
- * `/research` itself needs a decision about which project leads.
+ * Every published project gets a URL here, AutoOMR included. It used to be the one
+ * exception: research had a single project, so `/research` rendered it directly and
+ * this route skipped the slug to avoid two URLs for one page. The division pages are
+ * gone, so that exception has nothing left to be an exception to — AutoOMR is now a
+ * project page like the other five, reached from its card in the portfolio's Research
+ * row.
  */
-// Not annotated `: GetStaticPaths` on purpose; see the note in [category].astro.
+// Not annotated `: GetStaticPaths` on purpose — that widens the return type to the
+// generic result and leaves `Astro.props` as `unknown`. Inference gives the real
+// shape, which is what `InferGetStaticPropsType` below reads.
 export const getStaticPaths = async () => {
-  const all = await getCollection('projects', ({ data, id }) => !data.draft && id !== 'omr-project');
+  const all = await getCollection('projects', ({ data }) => !data.draft);
 
   return all.map((project) => {
     // Neighbours within the same division, so a visitor who landed here from a
-    // direct link has somewhere to go that is not the back button.
+    // direct link has somewhere to go that is not the back button. Ordered by
+    // `weight`, which is why the weights have to agree with the row order that
+    // Portfolio.astro lays out by hand.
     const siblings = all
       .filter((p) => p.data.category === project.data.category)
       .sort((a, b) => b.data.weight - a.data.weight);

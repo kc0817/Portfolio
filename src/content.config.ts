@@ -2,11 +2,16 @@ import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 /**
- * The four divisions Kevin's work sorts into. Order here is the order they
- * appear on the home reel and in navigation, so it is deliberate: the two
- * categories carrying competitive credentials and research lead.
+ * The three divisions Kevin's work sorts into. Order here is the order their
+ * sections appear down the home page, so it is deliberate: the two carrying
+ * competitive credentials and research lead.
+ *
+ * Games was a fourth. It was retired when the site collapsed onto a single page —
+ * the cut was Kevin's, on the grounds that a curated page beats a complete one.
+ * Removing it from this list is what removes it from the schema, so a project file
+ * can no longer claim the category by accident.
  */
-export const CATEGORIES = ['robotics', 'research', 'math', 'games'] as const;
+export const CATEGORIES = ['robotics', 'research', 'math'] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 const category = z.enum(CATEGORIES);

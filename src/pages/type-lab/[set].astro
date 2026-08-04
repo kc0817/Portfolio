@@ -2,12 +2,18 @@
 import TypeMock from '../../layouts/TypeMock.astro';
 import Hero from '../../components/Hero.astro';
 import AboutMe from '../../components/AboutMe.astro';
-import DemoReel from '../../components/DemoReel.astro';
+import Portfolio from '../../components/Portfolio.astro';
+import ExploreMore from '../../components/ExploreMore.astro';
 import { TYPESETS } from '../../lib/typesets';
 
 /**
  * One home page per candidate type system, rendered from the real components
  * so what is being compared is the actual page, not a facsimile of it.
+ *
+ * Which means this route follows the home page when the home page changes: the
+ * 2x2 division reel it used to end with is now the full portfolio, so each frame is
+ * considerably taller than it was. That is the point — a type system has to hold up
+ * on the page that actually exists.
  */
 export function getStaticPaths() {
   return TYPESETS.map((typeset) => ({ params: { set: typeset.id } }));
@@ -19,5 +25,6 @@ const { set } = Astro.params;
 <TypeMock set={set!}>
   <Hero />
   <AboutMe />
-  <DemoReel />
+  <Portfolio />
+  <ExploreMore />
 </TypeMock>

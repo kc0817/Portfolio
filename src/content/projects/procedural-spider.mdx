@@ -2,7 +2,7 @@
 title: 'Procedurally Animated Spider'
 category: math
 summary: 'A 3D spider that walks over arbitrary terrain using inverse kinematics for its legs and a custom latching algorithm to choose where each foot lands, while pathfinding toward the player.'
-weight: 85
+weight: 90
 stack: ['Java', 'Swing', '3D inverse kinematics', 'Flood fill']
 sourceLost: true
 links:
@@ -11,8 +11,13 @@ links:
     label: 'Run the simulation'
 ---
 
-{/* Kevin: the most visually striking thing you have made, which is why it leads
-    the Math Explorations division on the home page. Worth covering:
+{/* Kevin: the most visually striking thing you have made, and the card with no
+    footage behind it — it sits in the Math Explorations row on the home page
+    resting on the placeholder field until a clip lands. Dropping one in is a
+    single entry in `src/lib/projectMedia.ts` keyed `procedural-spider`; nothing
+    else needs touching. See that file's header for the cut it wants.
+
+    Worth covering in the writing:
       - what inverse kinematics is solving for, in plain language: given where
         the foot must go, find the joint angles
       - why the flood fill needed modifying to search only ground-adjacent tiles

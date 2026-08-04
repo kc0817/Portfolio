@@ -2,55 +2,127 @@
 import type { ImageMetadata } from 'astro';
 import MediaSlot from './MediaSlot.astro';
 import Marginalia from './Marginalia.astro';
+import type { Still } from '../lib/projectMedia';
 
 /**
- * The first thing on every division page and every project page: a contained
- * photo (never full-bleed — the point is a framed picture, not another hero),
- * the title, then an Overview paragraph. Division pages pass no `eyebrow`,
- * since the division name only needs a link back to itself on project pages.
+ * The first thing on a project page: a contained photo (never full-bleed — the
+ * point is a framed picture, not another hero), the title, then an Overview
+ * paragraph. It used to open the division pages too, which is why the props are
+ * written as a general opening rather than as a project's opening; the division
+ * pages are gone, but nothing here is specific to a project either, so the shape
+ * has been left alone.
  */
 interface Props {
   image: ImageMetadata | null;
   /**
-   * A clip to run in the slot instead of the still. Its real pixel dimensions
-   * come with it so the frame can take the clip's own aspect ratio — the point
-   * of this slot is the footage uncropped, and a fixed 16/10 frame would crop
-   * anything that is not already 16/10.
+   * A still that lives in `public/` rather than the asset pipeline — the project
+   * clip's poster, which is frame 0 of that clip. This slot shows the picture and
+   * nothing else: the clip belongs to the card the visitor hovered to get here,
+   * where motion answers attention instead of demanding it on arrival.
+   *
+   * Its real pixel dimensions come with it so the frame can take the picture's
+   * own aspect ratio — a fixed 16/10 frame would crop anything that is not
+   * already 16/10 — and `content` says where the picture actually sits inside
+   * those dimensions, since these encodes carry black bars.
    */
-  video?: { src: string; poster: string; width: number; height: number } | null;
+  still?: Still | null;
   alt: string;
+  /**
+   * What the picture above is, in the visitor's terms — captioned under it, not
+   * hidden in `alt`. A demo still is one frame of a running program, so what it
+   * shows is worth saying; a plain poster from frontmatter is a picture of the
+   * thing the page is already titled after, and takes no caption.
+   */
+  caption?: string | null;
   title: string;
   overview: string;
   eyebrow?: { label: string; href: string };
   figure?: 'rays' | 'linkage' | 'trajectory' | 'contours' | 'spline' | 'cube';
 }
 
-const { image, video = null, alt, title, overview, eyebrow, figure } = Astro.props;
+const {
+  image,
+  still = null,
+  alt,
+  caption = null,
+  title,
+  overview,
+  eyebrow,
+  figure,
+} = Astro.props;
 
 /**
- * A clip taller than it is wide would otherwise push the title off the first
- * screen, so the frame is capped by height and gives up width to stay under
- * the cap — `--media-ratio` is what lets the CSS trade one for the other. A
- * 16/9 clip is limited by the 46rem column and never reaches the cap; a square
- * one narrows to about 30rem and sits centred.
+ * The frame takes the picture's own aspect ratio, so nothing in this slot is
+ * ever cropped: the `still` carries its dimensions, and an `image` from the
+ * asset pipeline already knows its own. A picture taller than it is wide would
+ * otherwise push the title off the first screen, so the frame is capped by
+ * height and gives up width to stay under the cap — `--media-ratio` is what
+ * lets the CSS trade one for the other. A 16/9 picture is limited by the 46rem
+ * column and never reaches the cap; a square one narrows to about 30rem and
+ * sits centred.
+ *
+ * When the still declares a `content` box smaller than the file, the aspect
+ * that matters is the picture's, not the encode's: the black bars around it are
+ * baked into the file, and the frame should be the shape of what is worth
+ * looking at. `--crop-*` then scales the image so the content box exactly fills
+ * that frame and offsets it so the bars fall outside the frame's overflow —
+ * nothing of the picture is lost, and none of the black survives.
  */
-const mediaStyle = video ? `--media-ratio: ${video.width / video.height}` : undefined;
+const box = still?.content ?? null;
+const ratio = still
+  ? (box ? box.width / box.height : still.width / still.height)
+  : image
+    ? image.width / image.height
+    : null;
+
+const cropStyle =
+  still && box && (box.width !== still.width || box.height !== still.height)
+    ? [
+        `--crop-w: ${still.width / box.width}`,
+        `--crop-x: ${-box.left / box.width}`,
+        `--crop-y: ${-box.top / box.height}`,
+      ].join('; ')
+    : null;
+
+const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
+  .filter(Boolean)
+  .join('; ') || undefined;
 ---
 
 <div class="wrap intro">
   {figure && <Marginalia figure={figure} side="right" top="4%" size={260} />}
 
-  <div class:list={['intro__media', video && 'intro__media--video']} style={mediaStyle}>
-    <MediaSlot
-      video={video}
-      videoControls={true}
-      image={image}
-      alt={alt}
-      widths={[640, 960, 1440]}
-      sizes="(min-width: 74rem) 46rem, 90vw"
-      iconSize={36}
-    />
-  </div>
+  <figure class:list={['intro__figure', ratio && 'intro__figure--fit']} style={mediaStyle}>
+    <div class="intro__media">
+      {
+        still ? (
+          <img
+            class:list={['intro__still', cropStyle && 'intro__still--cropped']}
+            src={still.poster}
+            width={still.width}
+            height={still.height}
+            alt={alt}
+          />
+        ) : (
+          <MediaSlot
+            image={image}
+            alt={alt}
+            widths={[640, 960, 1440]}
+            sizes="(min-width: 74rem) 46rem, 90vw"
+            iconSize={36}
+          />
+        )
+      }
+    </div>
+
+    {
+      caption && (
+        <figcaption class="intro__caption">
+          <span class="intro__caption-label label">Featured above:</span> {caption}
+        </figcaption>
+      )
+    }
+  </figure>
 
   {
     eyebrow && (
@@ -76,22 +148,75 @@ const mediaStyle = video ? `--media-ratio: ${video.width / video.height}` : unde
     padding-top: var(--section-y);
   }
 
-  .intro__media {
+  /* The figure carries the width so the caption can never be wider than the
+     picture it describes — a caption that outruns its image reads as a stray
+     line of body copy. */
+  .intro__figure {
     max-width: 46rem;
-    margin-inline: auto;
+    margin: 0 auto var(--s-6);
+  }
+
+  /* The picture's own aspect, so nothing is cropped; then a height ceiling that
+     the width yields to, so a tall picture narrows rather than shoving the
+     title off the screen. Both branches keep the 46rem column as the outer
+     bound. */
+  .intro__figure--fit {
+    max-width: min(46rem, calc(30rem * var(--media-ratio)));
+  }
+
+  .intro__media {
+    position: relative;
     aspect-ratio: 16 / 10;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
-    margin-bottom: var(--s-6);
   }
 
-  /* The clip's own aspect, so nothing is cropped; then a height ceiling that
-     the width yields to, so a tall clip narrows rather than shoving the title
-     off the screen. Both branches keep the 46rem column as the outer bound. */
-  .intro__media--video {
+  .intro__figure--fit .intro__media {
     aspect-ratio: var(--media-ratio);
-    max-width: min(46rem, calc(30rem * var(--media-ratio)));
+  }
+
+  /* Sits close under the picture, so it reads as belonging to it rather than as
+     the first line of the page. The label is the mono uppercase the system uses
+     for every other piece of scaffolding text; the description after it is plain
+     sentence-case prose, because that is what it is. */
+  .intro__caption {
+    margin-top: var(--s-3);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--ink-secondary);
+  }
+
+  .intro__caption-label {
+    color: var(--ink-tertiary);
+  }
+
+  .intro__still {
+    width: 100%;
+    height: 100%;
+    /* `contain` rather than `cover`: the frame is already the picture's own
+       aspect, so there is nothing to crop and rounding should not shave an
+       edge off. */
+    object-fit: contain;
+    display: block;
+  }
+
+  /* A still whose file is bigger than its picture — black bars baked in around
+     the footage. The frame is already the picture's aspect, so scaling the image
+     by file-width / picture-width makes the picture exactly fill the frame, and
+     the offsets push the bars out past `overflow: hidden`. Percentages resolve
+     against the frame, so this holds at every width with no media queries and
+     no second copy of the file. */
+  .intro__still--cropped {
+    position: absolute;
+    /* The global reset caps every image at `max-width: 100%`, which is right
+       everywhere else and exactly wrong here: overflowing the frame is the
+       mechanism. */
+    max-width: none;
+    width: calc(100% * var(--crop-w));
+    height: auto;
+    left: calc(100% * var(--crop-x));
+    top: calc(100% * var(--crop-y));
   }
 
   .intro__eyebrow {
@@ -129,7 +254,7 @@ const mediaStyle = video ? `--media-ratio: ${video.width / video.height}` : unde
   }
 
   .intro__overview-text {
-    font-size: var(--text-lg);
+    font-size: var(--text-base);
     color: var(--ink-secondary);
   }
 </style>

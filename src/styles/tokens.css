@@ -40,13 +40,12 @@
   --link: var(--accent-blue-dark);
   --link-hover: color-mix(in srgb, var(--accent-blue-dark) 78%, black);
 
-  /* ---- Division coding ------------------------------------------------- */
-  /* Wayfinding only: a rule, a dot, a label. Never a filled region, because
-     four saturated fields would fight the reading this site is built for. */
-  --cat-robotics: #b03b2e;
-  --cat-research: #2f5f8f;
-  --cat-math: #6a5192;
-  --cat-games: #2d7a5f;
+  /* Division coding used to live here: four muted hues, kept for wayfinding on a
+     rule or a label and never a filled region. They were retired when the site
+     collapsed onto one page. Their last use was the 404's list of divisions, and
+     that list is now two in-page sections on the home page — nothing left to
+     colour-code, and reintroducing a hue per division would be decoration in
+     search of a job. Two blues carry the whole system. */
 
   /* ---- Type ------------------------------------------------------------ */
   /* Three faces, two lineages. Plex Sans and Plex Mono are one superfamily, so
@@ -171,9 +170,14 @@
   --delay-rise: 100ms;
 }
 
-/* Below this the five division links plus the wordmark cannot share one line at
-   320px without overflowing, so the header becomes two rows and grows. */
-@media (max-width: 32rem) {
+/* Below this the header becomes two rows — wordmark above, sections below — because
+   the wordmark, the graduation year, and three section labels cannot share one line
+   and still leave the wordmark room to set "Kevin Chen" on a single line. The
+   breakpoint moved from 32rem to 30rem when the nav went from four division links to
+   three sections; it is measured rather than chosen, so it has to move again if a
+   fourth section is ever added. Keep it in step with the matching query in
+   SiteHeader.astro. */
+@media (max-width: 30rem) {
   :root {
     --header-h: 5.75rem;
   }

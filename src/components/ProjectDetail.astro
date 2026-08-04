@@ -4,43 +4,44 @@ import { render } from 'astro:content';
 import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import PageIntro from './PageIntro.astro';
-import { CATEGORY_META, LINK_LABELS, url } from '../lib/site';
-import { DIVISION_VIDEO_ALT, type DivisionVideo } from '../lib/divisionVideos';
+import { CATEGORY_META, LINK_LABELS, sectionUrl, url } from '../lib/site';
+import { heroOf } from '../lib/projectMedia';
 
 /**
- * The full project page body, shared by every project's own URL and by the
- * research page (which merges with its one project, AutoOMR, instead of
- * pointing at a separate listing). Everything below the intro is unchanged
- * from before this page grew the shared [image, title, Overview] opening —
- * credentials, demo/repo actions, contribution scope, the facts rail, the
- * gallery, and prev/next navigation all still work exactly as they did.
+ * The full project page body. It used to be shared by every project's own URL and
+ * by the research division page, which merged with its one project rather than
+ * pointing at a one-item listing; the division pages are gone, so this now has
+ * exactly one caller and no `introStill` prop to tell it which kind of page it is.
  *
- * Every project's accent (credentials, rules, markers) is the fixed
- * structural Blue Dark — there is no longer a per-division accent to set.
+ * Everything below the intro is unchanged: credentials, demo/repo actions,
+ * contribution scope, the facts rail, the gallery, and prev/next navigation.
+ *
+ * Every project's accent (credentials, rules, markers) is the fixed structural
+ * Blue Dark — there is no per-division accent.
  */
 const FIGURE = {
   robotics: 'trajectory',
   research: 'contours',
   math: 'rays',
-  games: 'linkage',
 } as const;
 
 interface Props {
   project: CollectionEntry<'projects'>;
   prev: CollectionEntry<'projects'> | null;
   next: CollectionEntry<'projects'> | null;
-  /**
-   * The division's demo clip for the intro slot, passed only when this page IS
-   * a division page — currently just Research, which merges with AutoOMR. A
-   * project's own URL leaves this unset and keeps its poster still, since the
-   * clip belongs to the division, not to the project.
-   */
-  introVideo?: DivisionVideo['full'] | null;
 }
 
-const { project, prev, next, introVideo = null } = Astro.props;
+const { project, prev, next } = Astro.props;
 const { data } = project;
 const { Content } = await render(project);
+
+/**
+ * The picture at the top of the page, in the framing it was captured in — the
+ * uncropped counterpart of the clip that played on the card the visitor hovered to
+ * get here. A project with no footage falls through to its frontmatter poster, and
+ * then to `MediaSlot`'s designed empty state.
+ */
+const hero = heroOf(project.id);
 
 const meta = CATEGORY_META[data.category];
 const demo = data.links.find((l) => l.kind === 'demo' || l.kind === 'site');
@@ -60,15 +61,12 @@ const facts = [
 <article>
   <PageIntro
     image={data.poster ?? null}
-    video={introVideo}
-    alt={
-      introVideo
-        ? DIVISION_VIDEO_ALT[data.category]
-        : data.posterAlt ?? `${data.title} running`
-    }
+    still={hero}
+    alt={hero?.alt ?? data.posterAlt ?? `${data.title} running`}
+    caption={hero?.caption ?? null}
     title={data.title}
     overview={data.summary}
-    eyebrow={{ label: meta.label, href: url(`/${data.category}`) }}
+    eyebrow={{ label: meta.label, href: sectionUrl(data.category) }}
     figure={FIGURE[data.category]}
   />
 

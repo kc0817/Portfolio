@@ -1,23 +1,27 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { url } from '../lib/site';
+import { cardOf } from '../lib/projectMedia';
 import MediaSlot from './MediaSlot.astro';
 
 /**
- * The photo is the whole card; the title overlays it at the bottom, centred,
- * on a dark scrim for legibility — the same treatment the home page's
- * division tiles use. With no poster set yet, the media area is a flat field
- * tinted from the structural accent (Blue Dark) rather than an empty or
- * broken-looking box — a designed state, not a placeholder apology, that gets
- * richer the moment a real photo lands in the project's frontmatter. Every
- * card, on every division, carries the same fixed identity — no per-division
- * accent.
+ * The one card in the system. It used to have a counterpart — the home page's
+ * division tile — and the two were nearly the same object with different scrims;
+ * when the division tiles went away this absorbed the one thing the tile did
+ * better, which was its scrim (see below).
+ *
+ * The photo or clip is the whole card; the title overlays it at the bottom,
+ * centred, on a dark band. With no media set the area is a flat field tinted from
+ * the structural accent rather than an empty or broken-looking box — a designed
+ * state, not a placeholder apology, that gets richer the moment real footage lands
+ * in `projectMedia.ts`. Every card carries the same fixed identity; there is no
+ * per-division accent.
  *
  * The link is a bare positioning context and `.card__frame` carries everything
  * visible. That split is what lets the card's two vertical edges draw inward on
- * hover: the frame's own `left`/`right` animate, so the border, the corner
- * radius, the shadow, and the photo crop all narrow together as one object,
- * while the grid track the link occupies never changes and no neighbour moves.
+ * hover: the frame's own `left`/`right` animate, so the border, the corner radius,
+ * the shadow, and the media crop all narrow together as one object, while the grid
+ * track the link occupies never changes and no neighbour moves.
  */
 interface Props {
   project: CollectionEntry<'projects'>;
@@ -25,20 +29,30 @@ interface Props {
 
 const { project } = Astro.props;
 const { data } = project;
+
+/**
+ * A card plays its project's demo clip on hover. The lookup lives here rather than
+ * in the page or the row so that dropping a clip into `PROJECT_MEDIA` is the whole
+ * change — nothing has to pass anything down.
+ */
+const video = cardOf(project.id);
 ---
 
 <a class="card" href={url(`/projects/${project.id}`)}>
   <div class="card__frame">
     <div class="card__media">
       <MediaSlot
+        video={video}
+        playOn="hover"
         image={data.poster}
-        alt={data.posterAlt ?? `${data.title} running`}
+        alt={video?.alt ?? data.posterAlt ?? `${data.title} running`}
         widths={[360, 540, 720]}
-        sizes="(min-width: 64rem) 24rem, (min-width: 40rem) 40vw, 90vw"
+        sizes="(min-width: 52rem) 24rem, (min-width: 34rem) 44vw, 90vw"
       />
     </div>
-    <div class="card__scrim" />
-    <h3 class="card__title">{data.title}</h3>
+    <div class="card__body">
+      <h4 class="card__title">{data.title}</h4>
+    </div>
   </div>
 </a>
 
@@ -46,21 +60,29 @@ const { data } = project;
   /* The link reserves the grid cell and nothing else — no border, no ground, no
      padding. Holding the cell still is the whole point: the frame inside it is
      free to change width without the grid ever relaying out. */
+  /* A query container, so the title and the band below size themselves against the
+     card rather than the viewport. The same component is 560px wide in the two-up
+     robotics row and 288px in the three-up math row, and no single fixed title size
+     serves both: at `--text-lg` every math title wrapped to two lines, which pushed
+     the scrim band to 45% of a short card. Sizing against the viewport would not
+     have fixed it either — the two rows are that different at the *same* viewport
+     width. The card is the thing that changes, so the card is the container. */
   .card {
     position: relative;
     display: block;
     aspect-ratio: 4 / 3;
+    container-type: inline-size;
     text-decoration: none;
     color: inherit;
   }
 
-  /* The card as the eye sees it. `left` and `right` are the animated pair, so
-     the two vertical edges are what move; top and bottom are pinned, which
-     keeps this a change of width and not a general shrink. Layout properties
-     rather than a transform, deliberately: `scaleX` would squash the
-     photograph and the title, and a clip would cut the side borders off
-     instead of moving them. The cost is a layout pass confined to one card's
-     subtree, which is what a single hover can afford. */
+  /* The card as the eye sees it. `left` and `right` are the animated pair, so the
+     two vertical edges are what move; top and bottom are pinned, which keeps this
+     a change of width and not a general shrink. Layout properties rather than a
+     transform, deliberately: `scaleX` would squash the picture and the title, and
+     a clip would cut the side borders off instead of moving them. The cost is a
+     layout pass confined to one card's subtree, which is what a single hover can
+     afford. */
   .card__frame {
     position: absolute;
     top: 0;
@@ -68,17 +90,13 @@ const { data } = project;
     left: 0;
     right: 0;
     isolation: isolate;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
     border-radius: var(--radius-lg);
     border: 1px solid var(--rule);
     overflow: hidden;
-    padding: var(--s-4);
     box-shadow: var(--shadow-sm);
-    /* Resting values are the exit timing: the edges return faster than they
-       drew in, so releasing a card feels like a release rather than a second
-       deliberate movement. */
+    /* Resting values are the exit timing: the edges return faster than they drew
+       in, so releasing a card feels like a release rather than a second deliberate
+       movement. */
     transition:
       left var(--dur-fast) var(--ease-out),
       right var(--dur-fast) var(--ease-out),
@@ -93,8 +111,8 @@ const { data } = project;
     transition-duration: var(--dur-mid);
   }
 
-  /* The ring belongs to the frame, not the link, or it would sit at the full
-     width while the card it is describing has drawn in. */
+  /* The ring belongs to the frame, not the link, or it would sit at the full width
+     while the card it is describing has drawn in. */
   .card:focus-visible {
     outline: none;
   }
@@ -104,9 +122,9 @@ const { data } = project;
     outline-offset: 2px;
   }
 
-  /* With motion reduced the edges hold still — the shadow alone carries the
-     state. The global reduced-motion rule only collapses duration, which would
-     make this land as an instant jump in width. */
+  /* With motion reduced the edges hold still — the shadow alone carries the state.
+     The global reduced-motion rule only collapses duration, which would make this
+     land as an instant jump in width. */
   @media (prefers-reduced-motion: reduce) {
     .card:hover .card__frame,
     .card:focus-visible .card__frame {
@@ -121,23 +139,55 @@ const { data } = project;
     z-index: -2;
   }
 
-  .card__scrim {
+  /* The scrim is this band, not a wash over the whole card. Inherited from the
+     division tiles this card replaced, where a full-card gradient was found to be
+     dimming the very thing the card exists to show — and that matters more here
+     than it did there, because every card on the home page now plays footage.
+     `padding-block` is deliberately symmetric: it is what centres the title within
+     the band, so the band's height derives from the text rather than from a number
+     that stops being right the moment a title wraps to two lines.
+     Centred rather than left-anchored, so the title reads as a caption for the
+     whole picture rather than a corner label. */
+  .card__body {
     position: absolute;
-    inset: 0;
-    z-index: -1;
+    inset: auto 0 0 0;
+    padding-block: var(--s-5);
+    padding-inline: clamp(var(--s-4), 3vw, var(--s-6));
+    text-align: center;
+    /* Padding scales with the card too, or a narrow card spends 48px of its 216px
+       height on the band's breathing room alone. The first declaration is the
+       fallback where container units are unsupported. */
+    padding-block: clamp(var(--s-3), 4.5cqi, var(--s-5));
+    padding-inline: clamp(var(--s-4), 7cqi, var(--s-6));
+    /* Near-solid across the text, then all of the fade spent in the clear margin
+       above it — so the title sits on even ground and the gradient still resolves
+       into the picture instead of ending on an edge. */
     background: linear-gradient(
       to top,
-      rgba(22, 24, 28, 0.82) 0%,
-      rgba(22, 24, 28, 0.32) 55%,
-      rgba(22, 24, 28, 0) 100%
+      color-mix(in srgb, var(--ground-inverse) 92%, black) 0%,
+      color-mix(in srgb, var(--ground-inverse) 86%, transparent) 45%,
+      color-mix(in srgb, var(--ground-inverse) 60%, transparent) 72%,
+      transparent 100%
     );
   }
 
+  /* h4, not h3: the division name above the row is the h3, so a card sits one
+     tier under it. The size is the same either way — the tag is about the outline,
+     which is what a screen reader navigates. */
   .card__title {
+    /* Plain token first, as the fallback for a browser without container units.
+       Then 5.5cqi, which is the rate at which the longest title in the set
+       ("Procedurally Animated Spider", 28 characters) holds one line at every card
+       width the layout produces, while still reaching the `--text-lg` ceiling on a
+       full-width card — so nothing ever renders smaller than it used to.
+       Both bounds are ramp steps: the floor is `--text-base`, which is the smallest
+       size on this site that is set as something to read rather than as a label. */
     font-size: var(--text-lg);
+    font-size: clamp(var(--text-base), 5.5cqi, var(--text-lg));
     letter-spacing: var(--track-tight);
     color: var(--ink-inverse);
-    text-align: center;
     max-width: 34ch;
+    margin-inline: auto;
+    text-wrap: balance;
   }
 </style>

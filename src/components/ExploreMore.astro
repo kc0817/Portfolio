@@ -1,0 +1,204 @@
+---
+import MediaSlot from './MediaSlot.astro';
+import { MARQUEE } from '../lib/projectMedia';
+import { SITE } from '../lib/site';
+
+/**
+ * The offcuts. The portfolio above is six projects because Kevin cut it to six; this
+ * section is where the page admits that, points at the two places the rest actually
+ * lives, and shows a strip of it going past.
+ *
+ * The strip is a marquee rather than a carousel with controls, and that is a decision
+ * about what it is for. Controls imply the contents are worth navigating, item by
+ * item, which would be a promise this section explicitly does not make — the two
+ * links are the destinations. A strip that drifts reads as "there is more of this",
+ * which is the whole message, and it needs no chrome to say it.
+ *
+ * Square tiles, deliberately unlike the 4:3 project cards above: a different shape is
+ * what stops seven thumbnails reading as a fourth row of projects.
+ */
+const ITCH = 'https://kc0817.itch.io/';
+
+/**
+ * The track is rendered twice. One copy translated by -50% of the whole list lands
+ * exactly where the other began, so the loop needs no JavaScript holding position.
+ *
+ * Both copies are `<li>`s of one `<ul>` rather than two separate lists. That started
+ * out load-bearing — a hover effect used sibling selectors to move the tiles either
+ * side of the pointed-at one, and those cannot reach across two lists — and the effect
+ * is gone now. The single list stays because it is simply less markup for the same
+ * result: fourteen items and no wrapper, against two lists whose seam has to be
+ * measured either way.
+ *
+ * Duplicates carry `aria-hidden` individually, so a screen reader hears seven tiles
+ * rather than fourteen.
+ */
+const TRACK = [0, 1].flatMap((copy) =>
+  MARQUEE.map((clip, i) => ({ clip, copy, key: `${copy}-${i}` })),
+);
+---
+
+<section class="more" id="more" aria-labelledby="more-heading">
+  <div class="wrap more__head" data-rise>
+    <h2 id="more-heading">Explore More</h2>
+    <p class="more__note">
+      To keep a concise portfolio, I didn&rsquo;t show a lot of the more random, smaller
+      projects I&rsquo;ve done. If you&rsquo;re interested, a full list can be viewed in my{' '}
+      <a href={SITE.github} rel="noopener">Github</a>, and you can find a lot more demos
+      at my <a href={ITCH} rel="noopener">itch.io dashboard</a>.
+    </p>
+  </div>
+
+  {/*
+    Full-bleed rather than inside `.wrap`: a strip that starts and stops at the page
+    gutter reads as a bounded widget, and the point of this one is that it continues
+    past the edge of what you can see.
+
+    `--marquee-n` carries the count into the stylesheet, because the track's width and
+    therefore the duration both derive from it — a tile added or removed should not
+    need a number changed in two places.
+  */}
+  <div
+    class="marquee"
+    style={`--marquee-n: ${MARQUEE.length}`}
+    role="group"
+    aria-label="A sample of smaller projects"
+  >
+    <ul class="marquee__track">
+      {
+        TRACK.map(({ clip, copy }) => (
+          /* `data-video-hover-root` is what MediaSlot's hover script looks for when
+             the clip is not inside a link — it binds play/pause to this element, so
+             pointing at the tile (not the video buried under it) is what starts it. */
+          <li
+            class="marquee__tile"
+            aria-hidden={copy === 1 ? 'true' : undefined}
+            data-video-hover-root
+          >
+            <MediaSlot
+              video={clip}
+              playOn="hover"
+              preload="none"
+              alt={clip?.alt ?? ''}
+              iconSize={26}
+            />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .more {
+    padding-block: var(--section-y);
+  }
+
+  .more__head {
+    display: grid;
+    gap: var(--s-4);
+  }
+
+  .more__note {
+    color: var(--ink-secondary);
+    max-width: 68ch;
+  }
+
+  /* ---- Marquee --------------------------------------------------------- */
+
+  .marquee {
+    --tile-w: clamp(8.5rem, 18vw, 13rem);
+    --tile-gap: var(--s-5);
+
+    /* Duration from distance, not a taste value: one full cycle travels the width of
+       one copy of the set, so a fixed seconds-per-tile keeps the drift at the same
+       speed whatever the tile count or tile width works out to. 7s per tile is slow
+       enough to read a thumbnail in passing and not so slow that the strip looks
+       stalled. */
+    --marquee-dur: calc(var(--marquee-n) * 7s);
+
+    margin-top: var(--s-7);
+
+    /* `clip` rather than `hidden`: `overflow: hidden` on an ancestor makes the
+       sticky header stop sticking, and this is a full-bleed block on the same page.
+       Only the inline axis is clipped, so nothing shortens the row's own height. */
+    overflow-x: clip;
+
+    /* The strip runs edge to edge, so the fade below is what ends it rather than the
+       page gutter. */
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black var(--gutter),
+      black calc(100% - var(--gutter)),
+      transparent 100%
+    );
+  }
+
+  .marquee__track {
+    display: flex;
+    gap: var(--tile-gap);
+    /* Two copies side by side, so translating by half the list's width puts the
+       second copy exactly where the first began. The trailing padding is load-bearing:
+       fourteen tiles have thirteen gaps between them, and without a fourteenth the
+       halfway point would land half a gap short and the loop would visibly jump. */
+    padding: 0;
+    padding-inline-end: var(--tile-gap);
+    margin: 0;
+    list-style: none;
+    width: max-content;
+    animation: marquee-drift var(--marquee-dur, 60s) linear infinite;
+  }
+
+  /* ---- Tile ------------------------------------------------------------ */
+
+  /* The tile is a fixed square and stays one, at rest and on hover alike. It briefly
+     grew and widened to 16/9 under the pointer, with its neighbours parting to make
+     room; that was cut deliberately. The strip's whole job is to say "there is more of
+     this" and then get out of the way of the two links above it, and a tile that
+     rearranges the row around itself was doing more work than the message needs.
+     What answers the pointer now is the drift stopping and the clip starting — both of
+     which are the content responding, not the layout. */
+  .marquee__tile {
+    flex: none;
+    width: var(--tile-w);
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
+  @keyframes marquee-drift {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      /* Exactly one copy's width, which is half the doubled list. */
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  /* Pausing under the pointer is what makes the motion answerable rather than just
+     ongoing: a thumbnail that catches the eye can be held still and watched, which is
+     also the only reason the clip underneath gets a chance to play. `focus-within`
+     gives a keyboard the same courtesy once the tiles ever become focusable. */
+  .marquee:hover .marquee__track,
+  .marquee:focus-within .marquee__track {
+    animation-play-state: paused;
+  }
+
+  /* The global reduced-motion rule collapses *durations*, which for an infinite
+     linear loop would mean an unreadable blur rather than stillness — so the drift has
+     to be cancelled outright. The strip becomes a static row that overflows the
+     viewport, which is a fine thing for it to be: the two links above are how the
+     section is actually used, and no content lives only in here.
+     Nothing else needs a reduced-motion branch, because nothing else here moves — and
+     the clips stay parked on their posters, since MediaSlot declines to play at all
+     under this preference. */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee__track {
+      animation: none;
+    }
+  }
+</style>

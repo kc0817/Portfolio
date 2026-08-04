@@ -63,16 +63,22 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://kc0817.gith
       THESIS: A Purdue CS undergrad's project record that earns trust by making
       depth of implementation visible — renderers, physics, parsers, path
       followers, vision pipelines built where no library existed. It refuses the
-      undifferentiated nine-equal-cards grid; work is ranked and divided.
+      undifferentiated nine-equal-cards grid; work is ranked, cut, and divided.
       OWN-WORLD: Light only. Near-white ground, near-black ink, cool neutral
-      rules, Purdue old gold as material (rules, active marks, focus) never as
-      type; four muted division hues for wayfinding only. Fraunces on the two
-      display tiers only, IBM Plex Sans for everything read, IBM Plex Mono for
-      real data. One spacing rhythm, offset-plus-blur depth.
-      STORY: A visitor learns who Kevin is, sees four demos running, and enters
-      the division that matches what they came to evaluate.
+      rules, two blues and no third family — dark for structure (links, focus,
+      the primary action), light as material (marks, borders) and never as type
+      on the ground. Fraunces on the two display tiers only, IBM Plex Sans for
+      everything read, IBM Plex Mono for real data. One spacing rhythm,
+      offset-plus-blur depth.
+      STORY: A visitor learns who Kevin is, then reads the work itself — six
+      projects in three divisions, each card playing its own demo — without
+      following a link to get to any of it.
+      SHAPE: One page. It was five (a home page plus four topic pages); the
+      project list was cut from fifteen to six so the work could live on the
+      page that used to only point at it. Six project pages sit below, and
+      nothing else does. A curated six beats a complete fifteen.
       FIRST VIEWPORT: Full-bleed portrait, "Hello everyone, I'm Kevin Chen"
-      overlaid lower-left with the standings line beneath; replay reel below.
+      overlaid at the vertical middle.
       FORM: The standing exit — the category standard, taken by the user over
       assigned candidate 7. Seed key d5809468.
       FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
@@ -92,22 +98,43 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://kc0817.gith
       const still = matchMedia('(prefers-reduced-motion: reduce)');
 
       if ('IntersectionObserver' in window && !still.matches) {
-        const targets = document.querySelectorAll<HTMLElement>('main > section, main > article > section');
+        // Two kinds of arriving block, one observer.
+        //
+        // A `[data-rise]` block takes the authored `rise` entrance and is observed
+        // directly, wherever it sits in the tree — which is what lets the three
+        // divisions inside the portfolio section each rise on their own as the
+        // visitor reaches them. Every other `main > section` takes the gentler
+        // `settle`, except one that contains risers: its parts are carrying the
+        // arrival, so the section animating too would be a second gesture over the
+        // top of the first.
+        const risers = [...document.querySelectorAll<HTMLElement>('main [data-rise]')];
+        const isRiser = new Set(risers);
 
-        // A section marked [data-rise] takes the authored `rise` entrance instead
-        // of `settle`, and `rise` starts from opacity 0 — so it has to be hidden
-        // here rather than in the stylesheet. Arming from script is what keeps
-        // the Never-Hide-Content guarantee: no JS, no IntersectionObserver, or
-        // reduced motion all skip this block entirely and the section renders in
-        // its finished state. It runs in the same task as the observer setup, so
-        // the armed state is in place before the first paint and the section
-        // never flashes in before it rises.
-        document
-          .querySelectorAll<HTMLElement>('main [data-rise]')
-          .forEach((el) => el.classList.add('is-armed'));
+        // `rise` starts from opacity 0, so a riser has to be hidden here rather
+        // than in the stylesheet. Arming from script is what keeps the
+        // Never-Hide-Content guarantee: no JS, no IntersectionObserver, or reduced
+        // motion all skip this block entirely and every section renders in its
+        // finished state. It runs in the same task as the observer setup, so the
+        // armed state is in place before the first paint and nothing flashes in
+        // before it rises.
+        risers.forEach((el) => el.classList.add('is-armed'));
+
+        // One query so the result comes back in document order, which is what the
+        // slice below depends on.
+        const targets = [
+          ...document.querySelectorAll<HTMLElement>(
+            'main > section, main > article > section, main [data-rise]',
+          ),
+        ].filter((el) => isRiser.has(el) || !el.querySelector('[data-rise]'));
+
+        // Set by the first callback of any kind, which on a healthy page arrives
+        // within a frame or two of `observe()` — an IntersectionObserver reports on
+        // every target it is given, immediately, whether or not it intersects.
+        let reported = false;
 
         const observer = new IntersectionObserver(
           (entries) => {
+            reported = true;
             for (const entry of entries) {
               if (!entry.isIntersecting) continue;
               entry.target.classList.add('settle');
@@ -117,13 +144,30 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://kc0817.gith
           { rootMargin: '0px 0px -12% 0px', threshold: 0.05 },
         );
 
-        // The first section is already on screen at load; animating it would
-        // mean the page arrives mid-transition rather than composed.
-        [...targets].slice(1).forEach((el) => observer.observe(el));
+        // The first block is already on screen at load; animating it would mean
+        // the page arrives mid-transition rather than composed.
+        targets.slice(1).forEach((el) => observer.observe(el));
+
+        // Failsafe for the one case arming does not cover. `is-armed` holds a block
+        // at opacity 0 and hands the job of revealing it to the observer, so an
+        // environment where the API exists but never delivers a callback — a tab
+        // that is not compositing frames, an embedding that starves it — leaves
+        // content hidden indefinitely. That breaks the rule this whole mechanism is
+        // built around, and it matters more now that the portfolio is five armed
+        // blocks rather than one.
+        //
+        // Silence for this long means no callback is coming, so everything armed is
+        // revealed with no animation at all. Unarming rather than settling is
+        // deliberate: six blocks animating at once because a timer fired would be a
+        // worse arrival than no animation, and the page would still be wrong.
+        setTimeout(() => {
+          if (reported) return;
+          risers.forEach((el) => el.classList.remove('is-armed'));
+        }, 1500);
       }
     </script>
   <!-- impeccable-live-start -->
-<script is:inline src="http://localhost:8400/live.js?token=d0e2b791-53ae-45fc-9a55-595672082ec5"></script>
+<script is:inline src="http://localhost:8400/live.js?token=72918514-9656-4192-9f87-7eb073e96b32"></script>
 <!-- impeccable-live-end -->
 </body>
 </html>

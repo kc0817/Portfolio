@@ -5,7 +5,6 @@ summary: 'Optical music recognition software combining an SSD detector and an LS
 weight: 100
 period: '2025–2026'
 stack: ['Java', 'SSD', 'LSTM', 'Computer vision']
-role: 'TODO — Kevin: this is required, not optional. The repository belongs to a collaborator, so the site must state exactly what you contributed — which model, which subsystem, which part of the pipeline or interface.'
 collaborative:
   owner: 'Justin Chen'
   ownerUrl: 'https://github.com/Justin16Chen'
@@ -15,13 +14,23 @@ links:
     label: 'Source'
 ---
 
-{/* Kevin: one of your three headline projects, and the one a graduate reader
-    will care most about — but also the one where honest scoping matters most,
-    since the repo is Justin's. Worth covering:
+{/* Kevin: `role` is missing from the frontmatter above, and it is the one thing
+    this page needs most. It used to hold a note-to-you, which meant the note was
+    rendering to visitors inside the "My contribution" block — so it is gone
+    rather than left showing. Add it back as a real sentence:
+
+      role: 'What you actually built — which model, which subsystem, which part
+             of the pipeline or the interface.'
+
+    The repo is Justin's, so until that line exists the page states the
+    collaboration but not your scope, which is the wrong half to be missing on the
+    project a graduate reader will care most about.
+
+    Also worth covering in the writing:
       - what problem optical music recognition actually solves
       - why SSD for detection and LSTM for sequence, rather than one model
       - what the camera feedback loop corrects for
-      - your specific contribution, stated plainly
+
     Do not let this page imply you built the whole system. */}
 
 ## What it does
@@ -34,5 +43,4 @@ interface.
 
 ## Contribution
 
-This is a collaborative project owned by Justin Chen. Kevin's contribution is
-described above.
+This is a collaborative project owned by Justin Chen.

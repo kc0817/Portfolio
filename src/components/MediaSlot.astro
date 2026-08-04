@@ -54,6 +54,15 @@ interface Props {
    * watch the clip rather than a thumbnail of it.
    */
   videoControls?: boolean;
+  /**
+   * How much of the clip to fetch before it is asked to play. `metadata` is the
+   * default and right for a handful of slots. Pass `none` where a surface holds
+   * many clips at once — the Explore More strip carries fourteen video elements
+   * (seven, twice, for the seamless loop), and fourteen metadata round-trips on
+   * load buys nothing a poster is not already covering. The cost is a beat before
+   * the first hover plays, which the poster sits through.
+   */
+  preload?: 'none' | 'metadata';
 }
 
 const {
@@ -65,6 +74,7 @@ const {
   iconSize = 28,
   videoControls = false,
   playOn = 'visible',
+  preload = 'metadata',
 } = Astro.props;
 ---
 
@@ -93,7 +103,7 @@ const {
       muted
       loop
       playsinline
-      preload="metadata"
+      preload={preload}
       controls={videoControls || undefined}
       disablepictureinpicture
       data-slot-video={playOn}

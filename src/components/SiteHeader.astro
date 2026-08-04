@@ -1,14 +1,27 @@
 ---
-import { CATEGORIES } from '../content.config';
-import { CATEGORY_META, SITE, url } from '../lib/site';
+import { SECTIONS, SITE, sectionUrl, url } from '../lib/site';
 
 interface Props {
   transparent?: boolean;
 }
 const { transparent = false } = Astro.props;
 
+/**
+ * Two destinations, both on the home page, because there is nowhere else to go —
+ * the four division pages the nav used to list were folded into the home page's
+ * portfolio section.
+ *
+ * Which means the hrefs depend on where the header is rendered, and that decision
+ * is made at build time rather than in the browser. On the home page they are bare
+ * fragments, so a click scrolls (`scroll-behavior: smooth` and
+ * `scroll-padding-top` in global.css do the rest, and both already respect reduced
+ * motion). Anywhere else they are absolute, so a click navigates home and lands on
+ * the right section. Writing the absolute form everywhere would have cost the home
+ * page a full page load to scroll a few hundred pixels.
+ */
 const here = Astro.url.pathname.replace(/\/$/, '');
-const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
+const onHome = here === url('/').replace(/\/$/, '');
+const hrefFor = (id: string) => (onHome ? `#${id}` : sectionUrl(id));
 ---
 
 <header class:list={['header', { 'header--transparent': transparent }]}>
@@ -18,17 +31,17 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
       <span class="brand__sub">Purdue CS ’{String(SITE.gradYear).slice(2)}</span>
     </a>
 
-    <nav aria-label="Divisions">
+    <nav aria-label="Sections">
       <ul class="nav">
         {
-          CATEGORIES.map((c) => (
+          SECTIONS.map((section) => (
             <li>
               <a
-                href={url(`/${c}`)}
-                class:list={['nav__link', { 'nav__link--current': isCurrent(`/${c}`) }]}
-                aria-current={isCurrent(`/${c}`) ? 'page' : undefined}
+                href={hrefFor(section.id)}
+                class="nav__link"
+                data-section-link={onHome ? section.id : undefined}
               >
-                {CATEGORY_META[c].short}
+                {section.label}
               </a>
             </li>
           ))
@@ -37,6 +50,81 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
     </nav>
   </div>
 </header>
+
+{
+  onHome && (
+    <script>
+      /**
+       * Marks whichever section the visitor is currently reading. Pure enhancement:
+       * without it the two links still work, they just do not report position, which
+       * is why nothing here runs on the server and no state is rendered into the
+       * markup. With four page-based links the browser gave this away for free via
+       * `aria-current="page"`; two in-page links have to earn it.
+       *
+       * A section counts as current while any of it occupies the band between the
+       * header's lower edge and 55% down the viewport. That band, rather than a
+       * point, is what stops the mark flickering between two sections at the moment
+       * one hands over to the other, and biasing it to the upper half means the
+       * answer tracks what is being read rather than what is merely on screen.
+       *
+       * Between sections — in the hero, or down in the footer — nothing is current,
+       * and the mark clears. Inventing a nearest section there would be a claim the
+       * scroll position does not support.
+       */
+      const links = [
+        ...document.querySelectorAll<HTMLAnchorElement>('[data-section-link]'),
+      ];
+
+      if (links.length > 0 && 'IntersectionObserver' in window) {
+        const watched = links
+          .map((link) => {
+            const id = link.dataset.sectionLink!;
+            const section = document.getElementById(id);
+            return section ? { link, section } : null;
+          })
+          .filter((entry): entry is { link: HTMLAnchorElement; section: HTMLElement } =>
+            Boolean(entry),
+          );
+
+        const active = new Set<HTMLElement>();
+
+        function paint() {
+          // Document order, so when the band holds two sections at once the upper
+          // one wins — the one being scrolled away from is the one still being read.
+          const current = watched.find(({ section }) => active.has(section));
+
+          for (const { link, section } of watched) {
+            const on = current?.section === section;
+            link.classList.toggle('nav__link--current', on);
+            if (on) link.setAttribute('aria-current', 'true');
+            else link.removeAttribute('aria-current');
+          }
+        }
+
+        const header = document.querySelector<HTMLElement>('.header');
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              const el = entry.target as HTMLElement;
+              if (entry.isIntersecting) active.add(el);
+              else active.delete(el);
+            }
+            paint();
+          },
+          {
+            // Measured rather than assumed: `--header-h` changes at a breakpoint, and
+            // a hardcoded offset would put the band in the wrong place on a phone.
+            rootMargin: `-${header?.offsetHeight ?? 60}px 0px -55% 0px`,
+            threshold: 0,
+          },
+        );
+
+        watched.forEach(({ section }) => observer.observe(section));
+      }
+    </script>
+  )
+}
 
 <style>
   .header {
@@ -90,7 +178,7 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
   .nav {
     display: flex;
     align-items: center;
-    gap: clamp(var(--s-3), 2vw, var(--s-5));
+    gap: clamp(var(--s-4), 2.5vw, var(--s-6));
     list-style: none;
     padding: 0;
   }
@@ -107,8 +195,8 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
     white-space: nowrap;
   }
 
-  /* Fixed light blue on every page, regardless of division — the mark no
-     longer varies with which division a link points to. */
+  /* Fixed light blue, the same on both links — the mark reports position, it does
+     not identify a destination. */
   .nav__link::after {
     content: '';
     position: absolute;
@@ -134,10 +222,18 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
     transform: scaleX(1);
   }
 
-  /* Two rows on narrow phones: wordmark above, the five divisions spread across
-     their own line. Every destination stays visible and tappable — no drawer to
-     open, which matters when most arrivals are one-minute skims on a phone. */
-  @media (max-width: 32rem) {
+  /* Two rows on narrow phones: wordmark above, the three sections spread across
+     their own line.
+     This nearly went away. Two links fit beside the full wordmark at every width, and
+     for a while there were two — then Explore More made three, and at 375px the
+     wordmark was being crushed to 47px and breaking "Kevin Chen" across two lines.
+     Measured, one row needs 423px of content to hold the wordmark, the graduation
+     year, and three labels; 30rem is the first width that supplies it.
+     Below that the site keeps the rule it had with four divisions: every destination
+     stays visible and tappable, with no drawer to open, because most arrivals are
+     one-minute skims on a phone and a hidden nav costs more than 2rem of header
+     does. */
+  @media (max-width: 30rem) {
     .header__inner {
       flex-direction: column;
       align-items: stretch;

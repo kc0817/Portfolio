@@ -18,18 +18,41 @@ export const SITE = {
 } as const;
 
 /**
- * Division metadata. `blurb` is the one line that introduces a category page,
- * and it describes what the work has in common rather than selling it.
+ * The two in-page destinations the nav points at. Ids rather than paths, because
+ * both live on the home page now — there is nowhere else to go. `SiteHeader`
+ * turns these into bare fragments on the home page (so they scroll) and absolute
+ * links anywhere else (so they navigate), and its scroll-spy reads the same ids
+ * back off the document, so the nav and the sections cannot drift apart.
+ */
+export const SECTIONS = [
+  { id: 'about', label: 'About' },
+  { id: 'work', label: 'Portfolio' },
+  { id: 'more', label: 'Explore More' },
+] as const;
+
+/**
+ * Division metadata. `blurb` is the one line that introduces a division, and it
+ * describes what the work has in common rather than selling it.
+ *
+ * These used to head a page each. With the topic pages gone they head the three
+ * sections of the home page's portfolio instead — which makes them the only place
+ * this copy exists, so nothing here is surplus: the robotics blurb in particular
+ * carries the credential line (#1 in PA, six software awards) that no project card
+ * states on its own.
+ *
+ * `short` is what the old nav used for its four division links. Nothing reads it
+ * now that the nav is About and Portfolio, but it stays because it is the honest
+ * abbreviation of each label and the next surface that needs one will want it.
  */
 export const CATEGORY_META: Record<
   Category,
   { label: string; short: string; blurb: string }
 > = {
   robotics: {
-    label: 'Robotics',
+    label: 'FIRST Robotics',
     short: 'Robotics',
     blurb:
-      'Competition robot code for FIRST Tech Challenge teams: autonomous routines, path following, trajectory simulation, and the tuning tools that make them repeatable.',
+      'From 2024-2026, I programmed custom robots in both FTC and FRC as the lead software developer in the BrainSTEM organization. By adopting industry standard robotics algorithms, BrainSTEM has been ranked #1 in PA for autonomous navigation while winning 6 software-specific awards.',
   },
   research: {
     label: 'Research',
@@ -43,12 +66,6 @@ export const CATEGORY_META: Record<
     blurb:
       'Engines and simulations built from the mathematics up, in an environment that supplied no graphics, physics, or interface libraries to lean on.',
   },
-  games: {
-    label: 'Games',
-    short: 'Games',
-    blurb:
-      'Games written from scratch, where the interesting part was always the system underneath: collision, pathfinding, animation timing.',
-  },
 };
 
 /** Resolve a path against Astro's configured base so links survive a domain move. */
@@ -56,6 +73,22 @@ export function url(path: string): string {
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   const clean = path.startsWith('/') ? path : `/${path}`;
   return `${base}${clean}` || '/';
+}
+
+/**
+ * An absolute link to a section of the home page — the form to use from any page
+ * that is not the home page, since a bare fragment there would just look for the
+ * id in the wrong document.
+ *
+ * Takes any id on the home page, not only the two in `SECTIONS`: the project pages'
+ * eyebrows point at a division (`/#robotics`), which is a section of the portfolio
+ * rather than a nav destination.
+ *
+ * The header is the one caller that does not always want this — on the home page it
+ * emits the bare fragment instead, so the link scrolls rather than reloading.
+ */
+export function sectionUrl(id: string): string {
+  return `${url('/').replace(/\/$/, '')}/#${id}`;
 }
 
 export const LINK_LABELS: Record<string, string> = {

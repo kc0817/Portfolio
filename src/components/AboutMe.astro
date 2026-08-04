@@ -3,15 +3,19 @@ import MediaSlot from './MediaSlot.astro';
 import { ABOUT_PHOTO } from '../lib/aboutPhoto';
 
 /**
- * Sits between the hero and the division grid: text on the left, a contained
- * photo on the right (the same MediaSlot placeholder pattern as everywhere
- * else, so it looks finished before `src/assets/about.*` exists). Stacks to
- * photo-below-text on narrow viewports.
+ * Sits between the hero and the portfolio: text on the left, a contained photo on
+ * the right (the same MediaSlot placeholder pattern as everywhere else, so it
+ * looks finished before `src/assets/about.*` exists). Stacks to photo-below-text
+ * on narrow viewports.
+ *
+ * `id="about"` is one of the nav's two destinations — see `SECTIONS` in
+ * `lib/site.ts`, which is where the header reads it from, so the link and the
+ * landing point cannot drift apart.
  */
 ---
 
-<section class="about" aria-labelledby="about-heading" data-rise>
-  <div class="wrap about__inner" data-rise-target>
+<section class="about" id="about" aria-labelledby="about-heading">
+  <div class="wrap about__inner" data-rise>
     <div class="about__text">
       <h2 id="about-heading">About Me</h2>
       <p>
@@ -46,10 +50,10 @@ import { ABOUT_PHOTO } from '../lib/aboutPhoto';
     padding-block: var(--section-y);
   }
 
-  /* The scroll-triggered rise itself lives in global.css, wired by the
-     `data-rise` / `data-rise-target` pair in the markup above. `about__inner` is
-     the target rather than its two children, so the bio and the photo move as
-     one block — exactly in step, and one composited layer instead of two. */
+  /* The scroll-triggered rise itself lives in global.css, wired by `data-rise` in
+     the markup above. `about__inner` carries it rather than its two children, so
+     the bio and the photo move as one block — exactly in step, and one composited
+     layer instead of two. */
 
   .about__inner {
     display: grid;

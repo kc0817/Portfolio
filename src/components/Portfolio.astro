@@ -1,0 +1,202 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import ProjectCard from './ProjectCard.astro';
+import type { Category } from '../content.config';
+import { CATEGORY_META } from '../lib/site';
+
+/**
+ * The whole of Kevin's work, on the page that used to only point at it.
+ *
+ * This replaced a 2x2 grid of division tiles that linked out to four topic pages.
+ * Those pages are gone: the project list was cut to six, and six cards fit on one
+ * page without it becoming a scroll. What is left is three ruled entries — one per
+ * division — each opening with its name and its blurb and then showing its work.
+ *
+ * The rows are hand-arranged, not weight-sorted. That is the same decision
+ * `RoboticsShowcase` made before it, for the same reason: a row of two and a row of
+ * three are compositions, and which project leads a row is an editorial call rather
+ * than a number in frontmatter. `weight` still exists and still orders the prev/next
+ * links on the project pages, so the two must agree — if you reorder a row here,
+ * reorder the weights to match.
+ *
+ * Adding a project therefore takes two edits: the content file, and its slug in the
+ * row below. The build fails loudly if a slug here has no project (see the throw), and
+ * warns if a published project is missing from every row — a card silently absent from
+ * the only page that lists it is the failure mode worth being noisy about.
+ */
+interface Row {
+  category: Category;
+  /** Left to right, as they appear. */
+  ids: readonly string[];
+}
+
+const ROWS: readonly Row[] = [
+  {
+    category: 'robotics',
+    ids: ['ballistic-physics-solver', 'vision-piece-collection'],
+  },
+  {
+    category: 'research',
+    ids: ['autoomr'],
+  },
+  {
+    category: 'math',
+    ids: ['rubiks-cube-3d', 'procedural-spider', 'physics-collision-engine'],
+  },
+];
+
+const published = await getCollection('projects', ({ data }) => !data.draft);
+const byId = new Map(published.map((p) => [p.id, p]));
+
+const divisions = ROWS.map(({ category, ids }) => ({
+  category,
+  meta: CATEGORY_META[category],
+  projects: ids.map((id) => {
+    const project = byId.get(id);
+    if (!project) {
+      throw new Error(
+        `Portfolio.astro lists "${id}" in the ${category} row, but no published project has that id. ` +
+          `Either the file was renamed or it is still draft: true. ` +
+          `Published ids: ${[...byId.keys()].join(', ')}`,
+      );
+    }
+    return project;
+  }),
+}));
+
+const listed = new Set(ROWS.flatMap((row) => row.ids));
+const orphans = published.filter((p) => !listed.has(p.id));
+if (orphans.length > 0) {
+  console.warn(
+    `[Portfolio] ${orphans.length} published project(s) appear on no row and so are ` +
+      `reachable only by direct URL: ${orphans.map((p) => p.id).join(', ')}. ` +
+      `Add each to a row in src/components/Portfolio.astro, or set draft: true.`,
+  );
+}
+
+/**
+ * Columns at the widest breakpoint, per row. Research holds two even though it has
+ * one project: the empty second column is what makes its card exactly as wide as a
+ * robotics card, so the single-item row reads as the same measure as the row above it
+ * rather than as a card that happens to be a different size.
+ */
+const COLUMNS: Record<Category, number> = {
+  robotics: 2,
+  research: 2,
+  math: 3,
+};
+---
+
+<section class="portfolio" id="work" aria-labelledby="portfolio-heading">
+  <div class="wrap">
+    <div class="portfolio__head" data-rise>
+      <h2 id="portfolio-heading">Explore My Work</h2>
+    </div>
+
+    {/* Each division's `id` is the category itself, so it is linkable as
+        `/#robotics` — which is what a project page's eyebrow points back at, and a
+        near-echo of the `/robotics` URL the section replaced. */}
+    {
+      divisions.map(({ category, meta, projects }) => (
+        <section
+          class="division"
+          id={category}
+          aria-labelledby={`${category}-heading`}
+          data-rise
+        >
+          {/* Rule, name, blurb, in that order down the page — the blurb reads as
+              the division's opening line rather than as a column beside its title.
+              It was briefly two columns, name in a narrow rail and blurb alongside;
+              stacked is Kevin's call and it is the better one, because the rule
+              above the name then spans the whole entry and the eye runs
+              title → description → work in one straight line instead of stepping
+              sideways and back. */}
+          <div class="division__head">
+            <h3 class="division__name" id={`${category}-heading`}>
+              {meta.label}
+            </h3>
+            <p class="division__blurb">{meta.blurb}</p>
+          </div>
+
+          <div class="division__row" style={`--cols: ${COLUMNS[category]}`}>
+            {projects.map((project: CollectionEntry<'projects'>) => (
+              <ProjectCard project={project} />
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .portfolio {
+    padding-block: var(--section-y);
+  }
+
+  .portfolio__head {
+    margin-bottom: var(--s-7);
+  }
+
+  /* Each division is its own rising block rather than the section being one, so a
+     visitor meets Research as they reach it instead of all six cards resolving
+     while only the heading is on screen. See the `[data-rise]` note in
+     global.css. */
+  .division + .division {
+    margin-top: var(--s-9);
+  }
+
+  /* Title, then description, then the cards. One column at every width — the rule
+     spans the whole entry and nothing steps sideways. */
+  .division__head {
+    padding-top: var(--s-6);
+    border-top: 1px solid var(--rule);
+    margin-bottom: var(--s-6);
+    display: grid;
+    gap: var(--s-3);
+  }
+
+  /* Stays on the sans. Fraunces is reserved for the two page-level tiers, and this
+     is the third — a division inside a section, not a voice of its own. The size
+     and the rule above it are what give it standing instead. */
+  .division__name {
+    font-size: var(--text-xl);
+  }
+
+  /* Held to a measure even though the column is now full width: a blurb running the
+     whole 78rem page would be a 140-character line, which is past the point where
+     the eye reliably finds the start of the next one. */
+  .division__blurb {
+    color: var(--ink-secondary);
+    max-width: 68ch;
+  }
+
+  /* One column on a phone, two once two cards can hold their 4:3 without going
+     postage-stamp, then the row's own count.
+     Math is the only row that asks for three, so the second breakpoint is really
+     its breakpoint, and it is set by where a third column stops being worth having:
+     272px is the card floor this system already settled on (the auto-fill grid that
+     preceded these rows used `minmax(17rem, 1fr)`), and three columns clear it at
+     64rem but not at 52rem — at 900px they came out 244px, with the title band
+     eating two-fifths of each card. Below 64rem math wraps to two-plus-one instead.
+     An orphan on a half row is what wrapping looks like, and it is honest about the
+     count. */
+  .division__row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--s-6);
+  }
+
+  @media (min-width: 34rem) {
+    .division__row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .division__row {
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    }
+  }
+</style>

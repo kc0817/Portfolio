@@ -217,27 +217,32 @@ a:hover {
   }
 }
 
-/* Scroll-triggered `rise`, in one place so every section that takes it is the
-   same gesture. Two attributes wire a section up:
+/* Scroll-triggered `rise`, in one place so every block that takes it is the same
+   gesture. One attribute wires a block up:
 
-     data-rise         on the section — Base.astro arms it and the observer
-                       triggers it
-     data-rise-target  on the one block that actually moves — usually the inner
-                       wrapper, so a heading and its content rise together
-                       rather than as separate events
+     data-rise   on the block that actually moves. Base.astro observes it
+                 directly, arms it, and triggers it.
 
-   The section keeps `settle` as its trigger class but not its animation: `rise`
-   replaces it. Nothing here is safe without `is-armed`, which only ever comes
-   from script — see the note on the keyframe above. */
-[data-rise].settle {
-  animation: none;
-}
+   This used to be two attributes — `data-rise` on the section and
+   `data-rise-target` on the inner wrapper — because the observer could only see
+   `main > section` and so had to be pointed inward from there. That split could
+   not express what the portfolio section needs: three sibling divisions inside one
+   section, each rising as the visitor reaches it. A descendant selector reaches
+   every target under a marked ancestor, so nesting one inside another made the
+   outer block hide the inner one's content and hold it hidden.
 
-[data-rise].is-armed [data-rise-target] {
+   Observing the moving block itself removes the ancestor from the selector
+   entirely, which removes the nesting problem with it. A section that contains
+   risers now animates nothing of its own — Base.astro leaves it out of the
+   `settle` pass — and its parts carry the arrival instead.
+
+   Nothing here is safe without `is-armed`, which only ever comes from script; see
+   the note on the keyframe above. */
+[data-rise].is-armed {
   opacity: 0;
 }
 
-[data-rise].is-armed.settle [data-rise-target] {
+[data-rise].is-armed.settle {
   animation: rise var(--dur-rise) var(--ease-out) var(--delay-rise) both;
   will-change: transform, opacity;
 }

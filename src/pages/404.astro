@@ -1,7 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
-import { CATEGORIES } from '../content.config';
-import { CATEGORY_META, url } from '../lib/site';
+import { SECTIONS, sectionUrl } from '../lib/site';
+
+/**
+ * This used to list the four divisions, each with its own hue on a left rule. Those
+ * pages are gone, and so is the hue set — the work now lives in three sections of
+ * the home page. So does the way back: the two nav destinations, which is the whole
+ * site.
+ *
+ * The likeliest arrival here is an old `/robotics`, `/math`, `/games`, or
+ * `/projects/ftc-8393-decode` link, so the copy says the page moved rather than
+ * implying the visitor mistyped.
+ */
 ---
 
 <Base title="Page not found">
@@ -9,14 +19,15 @@ import { CATEGORY_META, url } from '../lib/site';
     <p class="label">404</p>
     <h1>That page isn&rsquo;t here.</h1>
     <p class="missing__note">
-      It may have moved, or the link may be wrong. The four divisions are the best
-      place to pick things back up.
+      The site used to spread across a page per topic. It is one page now, so a link
+      to a division or an older project has nowhere to land — but everything those
+      pages held is still here, further down the home page.
     </p>
     <ul class="missing__links">
       {
-        CATEGORIES.map((c) => (
-          <li style={`--cat: var(--cat-${c})`}>
-            <a href={url(`/${c}`)}>{CATEGORY_META[c].label}</a>
+        SECTIONS.map((section) => (
+          <li>
+            <a href={sectionUrl(section.id)}>{section.label}</a>
           </li>
         ))
       }
@@ -37,7 +48,7 @@ import { CATEGORY_META, url } from '../lib/site';
 
   .missing__note {
     color: var(--ink-secondary);
-    max-width: 50ch;
+    max-width: 54ch;
     margin-bottom: var(--s-6);
   }
 
@@ -48,12 +59,14 @@ import { CATEGORY_META, url } from '../lib/site';
     gap: var(--s-3);
   }
 
+  /* The rule was tinted per division. With no division hues left it takes the
+     structural accent, which is what every other marker on the site uses. */
   .missing__links a {
     display: inline-block;
     color: var(--ink);
     text-decoration: none;
     font-weight: 560;
-    border-left: 2px solid var(--cat);
+    border-left: 2px solid var(--accent-blue-light);
     padding-left: var(--s-3);
     transition: color var(--dur-fast) var(--ease-out);
   }
