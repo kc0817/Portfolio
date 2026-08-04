@@ -2,6 +2,7 @@
 import type { ImageMetadata } from 'astro';
 import MediaSlot from './MediaSlot.astro';
 import Marginalia from './Marginalia.astro';
+import Icon from './Icon.astro';
 import type { Still } from '../lib/projectMedia';
 
 /**
@@ -38,6 +39,12 @@ interface Props {
   overview: string;
   eyebrow?: { label: string; href: string };
   figure?: 'rays' | 'linkage' | 'trajectory' | 'contours' | 'spline' | 'cube';
+  /**
+   * Where "Return to Portfolio" points — the home page's anchor for this
+   * project's division (`/#robotics` and so on), which is where the project
+   * is actually reachable from rather than a generic home link.
+   */
+  backHref: string;
 }
 
 const {
@@ -49,6 +56,7 @@ const {
   overview,
   eyebrow,
   figure,
+  backHref,
 } = Astro.props;
 
 /**
@@ -91,6 +99,11 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
 
 <div class="wrap intro">
   {figure && <Marginalia figure={figure} side="right" top="4%" size={260} />}
+
+  <a class="intro__back" href={backHref}>
+    <Icon name="arrow-left" size={16} />
+    Return to Portfolio
+  </a>
 
   <figure class:list={['intro__figure', ratio && 'intro__figure--fit']} style={mediaStyle}>
     <div class="intro__media">
@@ -146,6 +159,40 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
     isolation: isolate;
     overflow-x: clip;
     padding-top: var(--section-y);
+  }
+
+  /* Below 74rem there is not reliably enough room beside the centred 46rem
+     figure for the link's own text, so it is a plain line above the image.
+     From 74rem up, the side column is wide enough (`--page-max` is 78rem) for
+     the link to sit there instead, positioned against the wrap's own padding
+     edge and top-aligned with the figure via `--section-y`, the same offset
+     that gives the figure its own top spacing. */
+  .intro__back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    margin-bottom: var(--s-5);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .intro__back:hover {
+    color: var(--ink);
+  }
+
+  @media (min-width: 74rem) {
+    .intro__back {
+      position: absolute;
+      top: var(--section-y);
+      left: 0;
+      margin-bottom: 0;
+    }
   }
 
   /* The figure carries the width so the caption can never be wider than the

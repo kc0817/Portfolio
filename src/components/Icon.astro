@@ -4,7 +4,16 @@
  * Unicode glyphs and emoji are not icons; anything the site needs is drawn here.
  */
 interface Props {
-  name: 'play' | 'arrow-right' | 'external' | 'github' | 'linkedin' | 'mail' | 'file' | 'image';
+  name:
+    | 'play'
+    | 'arrow-right'
+    | 'arrow-left'
+    | 'external'
+    | 'github'
+    | 'linkedin'
+    | 'mail'
+    | 'file'
+    | 'image';
   size?: number;
   class?: string;
 }
@@ -31,6 +40,14 @@ const { name, size = 20, class: className } = Astro.props;
       <>
         <path d="M4 12h16" />
         <path d="M14 6l6 6-6 6" />
+      </>
+    )
+  }
+  {
+    name === 'arrow-left' && (
+      <>
+        <path d="M20 12H4" />
+        <path d="M10 18l-6-6 6-6" />
       </>
     )
   }

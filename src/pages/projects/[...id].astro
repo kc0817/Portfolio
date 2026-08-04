@@ -3,6 +3,7 @@ import type { InferGetStaticPropsType } from 'astro';
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import ProjectDetail from '../../components/ProjectDetail.astro';
+import { PORTFOLIO_ORDER } from '../../lib/portfolioRows';
 
 /**
  * Every published project gets a URL here, AutoOMR included. It used to be the one
@@ -18,22 +19,27 @@ import ProjectDetail from '../../components/ProjectDetail.astro';
 export const getStaticPaths = async () => {
   const all = await getCollection('projects', ({ data }) => !data.draft);
 
-  return all.map((project) => {
-    // Neighbours within the same division, so a visitor who landed here from a
-    // direct link has somewhere to go that is not the back button. Ordered by
-    // `weight`, which is why the weights have to agree with the row order that
-    // Portfolio.astro lays out by hand.
-    const siblings = all
-      .filter((p) => p.data.category === project.data.category)
-      .sort((a, b) => b.data.weight - a.data.weight);
-    const at = siblings.findIndex((p) => p.id === project.id);
+  // One sequence across every division, in the same order the home page lays
+  // its rows out — robotics, then research, then math. So "next" from the last
+  // project in a row carries into the first project of the next row, rather
+  // than dead-ending at the end of its own category. A project absent from
+  // `PORTFOLIO_ORDER` (published but not yet slotted into a row) falls to the
+  // end, ordered by weight, so it still gets neighbours instead of crashing.
+  const byOrder = (p: (typeof all)[number]) => {
+    const at = PORTFOLIO_ORDER.indexOf(p.id);
+    return at === -1 ? Number.POSITIVE_INFINITY : at;
+  };
+  const ordered = [...all].sort((a, b) => byOrder(a) - byOrder(b) || b.data.weight - a.data.weight);
+
+  return ordered.map((project) => {
+    const at = ordered.findIndex((p) => p.id === project.id);
 
     return {
       params: { id: project.id },
       props: {
         project,
-        prev: siblings[at - 1] ?? null,
-        next: siblings[at + 1] ?? null,
+        prev: ordered[at - 1] ?? null,
+        next: ordered[at + 1] ?? null,
       },
     };
   });

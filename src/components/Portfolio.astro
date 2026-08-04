@@ -4,6 +4,7 @@ import { getCollection } from 'astro:content';
 import ProjectCard from './ProjectCard.astro';
 import type { Category } from '../content.config';
 import { CATEGORY_META } from '../lib/site';
+import { PORTFOLIO_ROWS, type PortfolioRow } from '../lib/portfolioRows';
 
 /**
  * The whole of Kevin's work, on the page that used to only point at it.
@@ -25,26 +26,7 @@ import { CATEGORY_META } from '../lib/site';
  * warns if a published project is missing from every row — a card silently absent from
  * the only page that lists it is the failure mode worth being noisy about.
  */
-interface Row {
-  category: Category;
-  /** Left to right, as they appear. */
-  ids: readonly string[];
-}
-
-const ROWS: readonly Row[] = [
-  {
-    category: 'robotics',
-    ids: ['ballistic-physics-solver', 'vision-piece-collection'],
-  },
-  {
-    category: 'research',
-    ids: ['autoomr'],
-  },
-  {
-    category: 'math',
-    ids: ['rubiks-cube-3d', 'procedural-spider', 'physics-collision-engine'],
-  },
-];
+const ROWS: readonly PortfolioRow[] = PORTFOLIO_ROWS;
 
 const published = await getCollection('projects', ({ data }) => !data.draft);
 const byId = new Map(published.map((p) => [p.id, p]));
