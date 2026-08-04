@@ -16,6 +16,12 @@ import { SITE } from '../lib/site';
  *
  * Square tiles, deliberately unlike the 4:3 project cards above: a different shape is
  * what stops seven thumbnails reading as a fourth row of projects.
+ *
+ * Each tile's name is hidden until it is pointed at, then fades in below it. Showing
+ * all seven at rest would turn the strip into a list, which is the one thing this
+ * section promises not to be — but a strip that pauses under the pointer and plays the
+ * clip has already invited a closer look, and at that moment "what is this?" is the
+ * obvious next question. So the name arrives exactly when it is asked for.
  */
 const ITCH = 'https://kc0817.itch.io/';
 
@@ -34,7 +40,7 @@ const ITCH = 'https://kc0817.itch.io/';
  * rather than fourteen.
  */
 const TRACK = [0, 1].flatMap((copy) =>
-  MARQUEE.map((clip, i) => ({ clip, copy, key: `${copy}-${i}` })),
+  MARQUEE.map((item, i) => ({ item, copy, key: `${copy}-${i}` })),
 );
 ---
 
@@ -66,22 +72,37 @@ const TRACK = [0, 1].flatMap((copy) =>
   >
     <ul class="marquee__track">
       {
-        TRACK.map(({ clip, copy }) => (
+        TRACK.map(({ item, copy }) => (
           /* `data-video-hover-root` is what MediaSlot's hover script looks for when
              the clip is not inside a link — it binds play/pause to this element, so
-             pointing at the tile (not the video buried under it) is what starts it. */
+             pointing at the tile (not the video buried under it) is what starts it.
+
+             It sits on the whole item rather than on the square, which means the label
+             is inside the hover region too. That is deliberate: a label that appeared
+             under the cursor and then had to be un-hovered to keep would be a trap,
+             and pointing at a thing's name is pointing at the thing. */
           <li
-            class="marquee__tile"
+            class="marquee__item"
             aria-hidden={copy === 1 ? 'true' : undefined}
             data-video-hover-root
           >
-            <MediaSlot
-              video={clip}
-              playOn="hover"
-              preload="none"
-              alt={clip?.alt ?? ''}
-              iconSize={26}
-            />
+            <div class="marquee__tile">
+              <MediaSlot
+                video={item?.src ? { src: item.src, poster: item.poster } : null}
+                image={item && !item.src && item.poster ? item.poster : null}
+                playOn="hover"
+                preload="none"
+                alt={item?.alt ?? ''}
+                iconSize={26}
+              />
+              {/* A reserved slot with no footage yet: the placeholder shows through
+                  underneath, and this banner is what tells it apart from a slot that
+                  is simply empty. */}
+              {item?.inProgress && <div class="marquee__banner">In Progress</div>}
+            </div>
+            {/* Rendered even for an empty slot, so every item reserves the same
+                height and filling a `null` later cannot change the strip's size. */}
+            <p class="marquee__label">{item?.title ?? ''}</p>
           </li>
         ))
       }
@@ -138,6 +159,9 @@ const TRACK = [0, 1].flatMap((copy) =>
   .marquee__track {
     display: flex;
     gap: var(--tile-gap);
+    /* Top-aligned, not stretched: the label below a tile is free to wrap to a second
+       line without any tile in the row moving to accommodate it. */
+    align-items: flex-start;
     /* Two copies side by side, so translating by half the list's width puts the
        second copy exactly where the first began. The trailing padding is load-bearing:
        fourteen tiles have thirteen gaps between them, and without a fourteenth the
@@ -152,21 +176,75 @@ const TRACK = [0, 1].flatMap((copy) =>
 
   /* ---- Tile ------------------------------------------------------------ */
 
+  /* The item is the square plus the space its label occupies. The width is set here
+     rather than on the square so that a label can never be wider than the tile it
+     names — it wraps inside the column instead of pushing the row apart. */
+  .marquee__item {
+    flex: none;
+    width: var(--tile-w);
+  }
+
   /* The tile is a fixed square and stays one, at rest and on hover alike. It briefly
      grew and widened to 16/9 under the pointer, with its neighbours parting to make
      room; that was cut deliberately. The strip's whole job is to say "there is more of
      this" and then get out of the way of the two links above it, and a tile that
      rearranges the row around itself was doing more work than the message needs.
-     What answers the pointer now is the drift stopping and the clip starting — both of
-     which are the content responding, not the layout. */
+     What answers the pointer now is the drift stopping, the clip starting, and the
+     label arriving — all three of which are the content responding, not the layout. */
   .marquee__tile {
-    flex: none;
-    width: var(--tile-w);
+    position: relative;
     aspect-ratio: 1 / 1;
     border-radius: var(--radius-md);
     border: 1px solid var(--rule);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+  }
+
+  /* A reserved slot with no footage yet. Laid across the placeholder's own
+     middle rather than pinned to an edge, so it reads as a stamp over the
+     field instead of a fourth border on it. */
+  .marquee__banner {
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    padding-block: var(--s-2);
+    background: var(--accent-orange, #d9730d);
+    color: #fff;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---- Hover label ----------------------------------------------------- */
+
+  /* Present in the layout at all times and only ever invisible, so the strip has one
+     height and pointing at a tile cannot move the tile next to it. `min-height` is
+     what an empty slot's label contributes; a real one that wraps simply grows past
+     it, and the top-aligned row absorbs that.
+     Secondary ink and a small size, because this is a name for something being looked
+     at rather than a caption to read — the picture is still the content. */
+  .marquee__label {
+    margin: var(--s-3) 0 0;
+    min-height: 1.35em;
+    font-size: var(--text-sm);
+    line-height: 1.35;
+    text-align: center;
+    text-wrap: balance;
+    color: var(--ink-secondary);
+    opacity: 0;
+    /* The resting value is the exit timing: a label released fades out faster than it
+       arrived, so leaving a tile reads as a release rather than a second decision.
+       Opacity alone — nothing about the item's box changes, which is what keeps a
+       paused strip perfectly still while the name appears in it. */
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .marquee__item:hover .marquee__label,
+  .marquee__item:focus-within .marquee__label {
+    opacity: 1;
+    transition-duration: var(--dur-mid);
   }
 
   @keyframes marquee-drift {
@@ -179,11 +257,11 @@ const TRACK = [0, 1].flatMap((copy) =>
     }
   }
 
-  /* Pausing under the pointer is what makes the motion answerable rather than just
-     ongoing: a thumbnail that catches the eye can be held still and watched, which is
-     also the only reason the clip underneath gets a chance to play. `focus-within`
-     gives a keyboard the same courtesy once the tiles ever become focusable. */
-  .marquee:hover .marquee__track,
+  /* The drift no longer stops under the pointer — a hovered tile still plays its
+     clip and fades in its label, but the strip keeps moving under it rather than
+     holding still. `focus-within` keeps the pause for keyboard focus, since a
+     tabbed-to tile has no pointer to keep the drift going for it and freezing the
+     strip is the only way its clip and label get a chance to be seen at all. */
   .marquee:focus-within .marquee__track {
     animation-play-state: paused;
   }
@@ -193,9 +271,11 @@ const TRACK = [0, 1].flatMap((copy) =>
      to be cancelled outright. The strip becomes a static row that overflows the
      viewport, which is a fine thing for it to be: the two links above are how the
      section is actually used, and no content lives only in here.
-     Nothing else needs a reduced-motion branch, because nothing else here moves — and
-     the clips stay parked on their posters, since MediaSlot declines to play at all
-     under this preference. */
+     Nothing else needs a reduced-motion branch. The clips stay parked on their
+     posters, since MediaSlot declines to play at all under this preference, and the
+     hover label's fade is the one case the global duration collapse handles correctly
+     on its own — a cross-fade with no duration is just the label appearing, which is
+     the whole of what it was ever doing. */
   @media (prefers-reduced-motion: reduce) {
     .marquee__track {
       animation: none;

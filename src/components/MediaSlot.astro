@@ -42,7 +42,16 @@ interface Props {
    * visitor's attention rather than a demand for it.
    */
   playOn?: 'visible' | 'hover';
-  image?: ImageMetadata | null;
+  /**
+   * An imported asset, which Astro processes into responsive sources — or a bare
+   * URL string for a picture that ships from `public/` alongside the clips. The
+   * string form exists for the Explore More strip, where one slot is a still and
+   * the rest are clips: they are declared together in `projectMedia.ts` and share
+   * the `public/media/` convention, and routing that one file through
+   * `src/assets/` instead would split a set of seven across two pipelines to save
+   * nothing at a 200px tile.
+   */
+  image?: ImageMetadata | string | null;
   alt?: string;
   widths?: number[];
   sizes?: string;
@@ -108,6 +117,8 @@ const {
       disablepictureinpicture
       data-slot-video={playOn}
     />
+  ) : typeof image === 'string' ? (
+    <img class="media-slot__img" src={image} alt={alt} loading="lazy" decoding="async" />
   ) : image ? (
     <Image src={image} alt={alt} widths={widths} sizes={sizes} class="media-slot__img" />
   ) : (

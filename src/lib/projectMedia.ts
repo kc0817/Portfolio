@@ -211,6 +211,33 @@ export const PROJECT_MEDIA: Record<string, ProjectMedia> = {
     alt: 'A 3D Rubik’s cube built from scratch, rotating about its coordinate axes.',
     caption: 'A Rubik’s cube demo rendered with a custom 3D graphics engine',
   },
+
+  /**
+   * The 1628x1076 capture is one app window with chrome on three sides: the energy
+   * charts and their "Rescale Charts" button top-left, a live telemetry readout
+   * top-right from x=1220, and a full-width button bar from y=985. No 4:3 window
+   * holds all of it — at full height the widest 4:3 is 1435, which slices both the
+   * readout and the last button in the bar.
+   *
+   * So the cut drops both: 1208x906 at the origin, scaled to 960x720. It is the
+   * largest exact 4:3 that ends before the readout begins, and its bottom edge
+   * clears the button bar entirely rather than showing a row of half-buttons. What
+   * survives is what the project is about — all three energy charts with their KE /
+   * GE / Sum bars, both circles, and the platform they land on entering at the
+   * bottom, where the title scrim sits over it anyway.
+   *
+   * Runs the source's full 8.8s from t=0, so the poster is genuinely frame 0 and the
+   * card rests on the moment the clip resumes from. The chart panel switches from
+   * energy to momentum partway through, which is the demo showing its own second
+   * half rather than a cut worth avoiding.
+   */
+  'physics-collision-engine': {
+    card: cut('physics-collision-engine', 960, 720),
+    hero: still('physics-collision-engine', 1628, 1076),
+    alt: 'Two circles falling and colliding in a 2D rigid-body sim, with live energy charts tracking kinetic and potential energy either side of the impact.',
+    caption:
+      'Rigid-body collisions under Separating Axis Theorem, with energy and momentum graphed live',
+  },
 };
 
 /**
@@ -218,14 +245,23 @@ export const PROJECT_MEDIA: Record<string, ProjectMedia> = {
  *
  * These are not projects and never get a page — they are the offcuts the portfolio
  * deliberately leaves out, shown as a drifting strip of thumbnails. So they live
- * here as bare clips rather than in `PROJECT_MEDIA`: no title, no slug, no route,
- * nothing to look them up by. A `null` slot renders `MediaSlot`'s designed empty
- * field, which is what all seven do until footage lands.
+ * here as bare clips rather than in `PROJECT_MEDIA`: no slug, no route, nothing to
+ * look them up by. A `null` slot renders `MediaSlot`'s designed empty field.
  *
- * To fill one, drop `public/media/more-<name>-card.mp4` plus a `-card.jpg` poster
+ * The `title` is the one piece of prose a slot gets. It is hidden at rest and fades
+ * in under the tile the pointer is on, which is the whole reason these carry a name
+ * at all: the strip pauses under the pointer, so a thumbnail that catches the eye can
+ * be held still, watched, and — now — identified. It stays hidden otherwise because
+ * seven captions drifting past would be a list, and this section is explicitly not
+ * offering a list to read.
+ *
+ * To fill a slot, drop `public/media/more-<name>-card.mp4` plus a `-card.jpg` poster
  * cut from its frame 0, then replace a `null` below:
  *
- *     moreCut('kevmos', 'Kevmos in play, the ghosts closing in on two sides.'),
+ *     moreCut('kevmos', 'Kevmos', 'Kevmos in play, the ghosts closing in on two sides.'),
+ *
+ * Use `moreStill` where there is no clip, only a picture — same tile, same hover
+ * label, no video element.
  *
  * **Cut these square.** The tile is 1:1 and stays 1:1 — hovering stops the drift and
  * plays the clip, and nothing about the frame changes. So the square is the whole of
@@ -237,28 +273,114 @@ export const PROJECT_MEDIA: Record<string, ProjectMedia> = {
  * (An earlier version of the strip widened the tile to 16:9 on hover, which is why
  * this note used to say the opposite and ask for landscape. That effect is gone.)
  */
-export interface MoreClip {
-  src: string;
-  poster: string;
+export interface MoreItem {
+  /** The label that fades in beneath the tile while it is pointed at. */
+  title: string;
+  /** The resting picture, and for a clip its frame 0. Absent on a slot with
+   *  no footage yet, which falls through to the placeholder instead. */
+  poster?: string;
+  /** Absent on a slot that is a still and never had a clip behind it. */
+  src?: string;
   alt: string;
+  /**
+   * Marks a named slot that has no footage at all yet — the tile falls
+   * through to `MediaSlot`'s placeholder field, with an "In Progress" banner
+   * laid across it so the reserved slot reads as claimed rather than empty.
+   */
+  inProgress?: boolean;
 }
 
-export function moreCut(name: string, alt: string): MoreClip {
+export function moreCut(name: string, title: string, alt: string): MoreItem {
   return {
+    title,
     src: url(`/media/more-${name}-card.mp4`),
     poster: url(`/media/more-${name}-card.jpg`),
     alt,
   };
 }
 
-export const MARQUEE: (MoreClip | null)[] = [
-  null, // 1
-  null, // 2
-  null, // 3
-  null, // 4
-  null, // 5
-  null, // 6
-  null, // 7
+export function moreStill(name: string, title: string, alt: string): MoreItem {
+  return {
+    title,
+    poster: url(`/media/more-${name}-card.jpg`),
+    alt,
+  };
+}
+
+/** A named slot reserved for a project with no footage yet. */
+export function moreProgress(title: string): MoreItem {
+  return { title, alt: '', inProgress: true };
+}
+
+export const MARQUEE: (MoreItem | null)[] = [
+  /* Cut square from an 846x842 capture — 832x832 inset three or four pixels on each
+     side, which is what it takes to lose the window's own pale border. Runs 0–17.8s;
+     at t=18 the CMU player draws its chrome back over the view and the source ends on
+     black, and neither belongs in a loop. */
+  moreCut(
+    'raycaster',
+    'Raycaster',
+    'A first-person view of a grid maze drawn by raycasting, with a minimap tracking the camera as it turns.',
+  ),
+
+  /* 838x840, so square costs two pixels of height and nothing else. Runs 2.6s to the
+     end of the 32s source — everything except the app's own "What is Perlin Noise?"
+     modal, which is a wall of small print over black and would have been the tile's
+     resting picture. The cut used to start at 2.5s, but the modal was still hanging
+     on for the first three frames after that mark, so the poster (frame 0) rested on
+     it anyway; starting 0.1s later lands past the flash, on the terrain itself.
+     Nothing else is cut, because the toggling *is* the demo: the
+     generator switches between the raw greyscale height field and the biome colouring
+     eight times over the clip, and seeing the same terrain in both is what shows that
+     the map is read out of the noise rather than drawn. */
+  moreCut(
+    'perlin-terrain',
+    'Perlin Noise Terrain Generator',
+    'A procedurally generated map toggling between its raw greyscale Perlin noise and the biome colouring read out of it — water, sand, grass and rock by height.',
+  ),
+
+  /* A 1080x1920 phone capture (the file is landscape with a rotation flag; ffmpeg
+     applies it, so the crop is against the upright frame). 1080x1080 taken from the
+     middle — top and bottom equally — which keeps the field, the robot, and the
+     driver station in one square. Runs 3–15s, the stretch where the robot is driving
+     rather than being set up. */
+  moreCut(
+    'swerve-drive',
+    'Swerve Drive',
+    'A swerve-drive robot translating and spinning at once across a practice field, each wheel steering independently.',
+  ),
+
+  /* 1920x1080 with the game sitting in the middle of a black field, so the square is
+     1080x1080 with 420px taken off each side — the maze, the score, and the lives row
+     all fall inside it and the black is the game's own background, not a bar. */
+  moreCut(
+    'pac-man',
+    'Pac Man',
+    'A Pac-Man clone mid-round, the ghosts closing in while the maze empties of pellets.',
+  ),
+
+  /* 740x746, cropped to 740x740 off the top and bottom and scaled to 720x720.
+     Runs the source's full 12.6s from t=0 — no trim, the whole demo. */
+  moreCut(
+    'google-snake',
+    'Google Snake',
+    'A Google Snake clone on its chequered board, the snake curled below an apple.',
+  ),
+
+  /* 740x742, so square costs two pixels of height. Runs the source end to end and rests
+     on its own frame 0: the clip is one continuous demonstration — functions typed into
+     the panel, the panel sliding away to the plotted curves, back to edit them, out to
+     the new curves — and any window smaller than the whole thing cuts that loop
+     somewhere in the middle of it. */
+  moreCut(
+    'graphing-calculator',
+    'Custom Graphing Calculator',
+    'A graphing calculator built from scratch: equations typed into an input panel, then the panel sliding away to the curves plotted from them.',
+  ),
+
+  /* Reserved, not built yet — the tile shows the placeholder field with an
+     "In Progress" banner rather than a real clip. */
+  moreProgress('Sinusoidal Motion Controller'),
 ];
 
 /** The clip a project's card plays on hover, or null if it has no footage yet. */
