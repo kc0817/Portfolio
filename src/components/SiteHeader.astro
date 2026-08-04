@@ -27,22 +27,12 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
                 href={url(`/${c}`)}
                 class:list={['nav__link', { 'nav__link--current': isCurrent(`/${c}`) }]}
                 aria-current={isCurrent(`/${c}`) ? 'page' : undefined}
-                style={`--cat: var(--cat-${c})`}
               >
                 {CATEGORY_META[c].short}
               </a>
             </li>
           ))
         }
-        <li>
-          <a
-            href={url('/about')}
-            class:list={['nav__link', { 'nav__link--current': isCurrent('/about') }]}
-            aria-current={isCurrent('/about') ? 'page' : undefined}
-          >
-            About
-          </a>
-        </li>
       </ul>
     </nav>
   </div>
@@ -117,22 +107,18 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
     white-space: nowrap;
   }
 
-  /* At rest the mark is orange when a page has no division, the division hue
-     when it does — so the current-page indicator tells you where you are
-     twice over. Hovering is a different signal than "you are here", so it
-     always shows the fixed accent orange regardless of division. */
+  /* Fixed light blue on every page, regardless of division — the mark no
+     longer varies with which division a link points to. */
   .nav__link::after {
     content: '';
     position: absolute;
     inset-inline: 0;
     bottom: -2px;
     height: 2px;
-    background: var(--cat, var(--accent-orange));
+    background: var(--accent-blue-light);
     transform: scaleX(0);
     transform-origin: left;
-    transition:
-      transform var(--dur-mid) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
+    transition: transform var(--dur-mid) var(--ease-out);
   }
 
   .nav__link--current {
@@ -140,16 +126,12 @@ const isCurrent = (path: string) => here === url(path).replace(/\/$/, '');
   }
 
   .nav__link:hover {
-    color: var(--accent-orange);
+    color: var(--accent-blue-light);
   }
 
   .nav__link:hover::after,
   .nav__link--current::after {
     transform: scaleX(1);
-  }
-
-  .nav__link:hover::after {
-    background: var(--accent-orange);
   }
 
   /* Two rows on narrow phones: wordmark above, the five divisions spread across

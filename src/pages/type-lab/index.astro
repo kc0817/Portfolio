@@ -1,0 +1,629 @@
+---
+/**
+ * Type Lab — three candidate type systems for the portfolio, each rendered as a
+ * live home page in its own frame, side by side at one scale.
+ *
+ * This is a tool, not a page of the site: it is deliberately dark, so three
+ * light specimens read as specimens, and it is `noindex` and absent from the
+ * sitemap. Delete `src/pages/type-lab/` once a set is chosen.
+ */
+import '@fontsource-variable/archivo';
+import '@fontsource-variable/jetbrains-mono';
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/inter/opsz.css';
+import '@fontsource-variable/inter-tight';
+import '@fontsource-variable/geist-mono';
+import '@fontsource-variable/fraunces/full.css';
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource/ibm-plex-mono/500.css';
+
+import { TYPESETS } from '../../lib/typesets';
+import { url } from '../../lib/site';
+
+const DEVICES = [
+  { id: 'desktop', label: 'Desktop', width: 1440 },
+  { id: 'laptop', label: 'Laptop', width: 1200 },
+  { id: 'phone', label: 'Phone', width: 430 },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Type Lab — three candidate systems</title>
+    <meta name="robots" content="noindex, nofollow" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="bar__id">
+        <span class="bar__title">Type Lab</span>
+        <span class="bar__sub">Three candidate systems · Kevin Chen Portfolio</span>
+      </div>
+
+      <div class="bar__controls">
+        <span class="bar__baseline">
+          <span class="bar__baseline-key">Shipped</span>
+          Specimen — Fraunces + IBM Plex
+        </span>
+
+        <fieldset class="seg">
+          <legend class="sr">Preview width</legend>
+          {
+            DEVICES.map((device, i) => (
+              <label class="seg__opt">
+                <input
+                  type="radio"
+                  name="device"
+                  value={device.width}
+                  checked={i === 0}
+                  data-device
+                />
+                <span>{device.label}</span>
+                <span class="seg__px">{device.width}</span>
+              </label>
+            ))
+          }
+        </fieldset>
+      </div>
+    </header>
+
+    <main class="lab">
+      {
+        TYPESETS.map((typeset) => (
+          <article class="col" data-typeset-card={typeset.id}>
+            <div class="col__head">
+              <h2 class={`col__name col__name--${typeset.id}`}>{typeset.name}</h2>
+              <p class="col__claim">{typeset.claim}</p>
+            </div>
+
+            <div class="slot" data-slot>
+              <iframe
+                class="slot__frame"
+                data-frame
+                src={url(`/type-lab/${typeset.id}`)}
+                title={`Home page set in ${typeset.name}`}
+                loading="eager"
+                scrolling="no"
+              />
+            </div>
+
+            <dl class={`roles roles--${typeset.id}`}>
+              <div class="roles__row">
+                <dt>Display</dt>
+                <dd class="roles__display">{typeset.roles.display}</dd>
+              </div>
+              <div class="roles__row">
+                <dt>Body</dt>
+                <dd class="roles__body">{typeset.roles.body}</dd>
+              </div>
+              <div class="roles__row">
+                <dt>Data</dt>
+                <dd class="roles__data">{typeset.roles.data}</dd>
+              </div>
+            </dl>
+
+            <div class="col__notes">
+              <p class="col__why">{typeset.rationale}</p>
+              <p class="col__cost">
+                <span class="col__cost-key">Cost</span>
+                {typeset.tradeoff}
+              </p>
+            </div>
+
+            <a class="col__open" href={url(`/type-lab/${typeset.id}`)} target="_blank" rel="noopener">
+              Open {typeset.name} full size
+              <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+                <path
+                  d="M6 3h7v7M13 3 3.5 12.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </a>
+          </article>
+        ))
+      }
+    </main>
+
+    <footer class="foot">
+      <p>
+        Each frame is the real home page — <code>Hero</code>, <code>AboutMe</code>,
+        <code>DemoReel</code>. Specimen was chosen and now ships: its values live in
+        <code>src/styles/tokens.css</code> and its faces load in <code>Base.astro</code>,
+        so its frame here inherits the real system. The other two are held in
+        <code>src/styles/typesets.css</code> as the record of what that decision was
+        made against; delete <code>src/pages/type-lab/</code>, that file, and the four
+        unused font packages once the comparison stops being useful.
+      </p>
+    </footer>
+
+    <script>
+      // Each frame renders at a true device width and is scaled down to fit its
+      // column, so the composition being judged is the real one rather than a
+      // narrow-viewport version of it. The frames report their own content
+      // height, which is what lets a whole page sit in a column with no
+      // internal scrollbar to fight.
+      const lab = document.querySelector<HTMLElement>('.lab')!;
+      const slots = [...document.querySelectorAll<HTMLElement>('[data-slot]')];
+      const heights = new WeakMap<HTMLIFrameElement, number>();
+      let deviceWidth = 1440;
+      let pending = 0;
+      let retries = 0;
+
+      // Fitting a slot changes its height, which changes the page height. Every
+      // resize signal here is therefore filtered down to a width change and
+      // deferred out of the current task, so the observer can never re-enter
+      // the layout it just caused. A timeout rather than a frame callback,
+      // because a background or non-compositing tab never paints and the lab
+      // would otherwise open with three unscaled frames.
+      function schedule() {
+        clearTimeout(pending);
+        pending = setTimeout(fitAll, 0);
+      }
+
+      function fitAll() {
+        let measured = true;
+
+        for (const slot of slots) {
+          const iframe = slot.querySelector<HTMLIFrameElement>('[data-frame]');
+          if (!iframe) continue;
+
+          const available = slot.parentElement?.clientWidth ?? 0;
+          if (!available) {
+            // The column has no width yet — leave the frame at its pre-scale
+            // size rather than collapsing it, and try again shortly.
+            measured = false;
+            continue;
+          }
+
+          // Never scale up. A phone frame in a wider column renders at 1:1 and
+          // centres; scaling it past life size would show type at a weight and
+          // size the device never renders.
+          const scale = Math.min(1, available / deviceWidth);
+
+          // Width first, then measure: reading the child's scrollHeight forces
+          // it to lay out at its new width, so a device switch gets the height
+          // that width actually produces rather than the previous one. The
+          // messaged height is the fallback for anything not same-origin.
+          iframe.style.width = `${deviceWidth}px`;
+
+          let height = 0;
+          try {
+            height = iframe.contentDocument?.documentElement.scrollHeight ?? 0;
+          } catch {
+            /* cross-origin — fall through to the reported height */
+          }
+          if (!height) height = heights.get(iframe) ?? Math.round(deviceWidth * 1.9);
+
+          iframe.style.height = `${height}px`;
+          iframe.style.transform = `scale(${scale})`;
+          slot.style.width = `${Math.round(deviceWidth * scale)}px`;
+          slot.style.height = `${Math.round(height * scale)}px`;
+        }
+
+        if (measured) {
+          retries = 0;
+        } else if (retries++ < 60) {
+          schedule();
+        }
+      }
+
+      addEventListener('message', (event) => {
+        if (event.data?.type !== 'type-mock-height') return;
+
+        for (const slot of slots) {
+          const iframe = slot.querySelector<HTMLIFrameElement>('[data-frame]');
+          if (!iframe || iframe.contentWindow !== event.source) continue;
+          heights.set(iframe, event.data.height);
+        }
+
+        schedule();
+      });
+
+      for (const input of document.querySelectorAll<HTMLInputElement>('[data-device]')) {
+        input.addEventListener('change', () => {
+          deviceWidth = Number(input.value);
+          schedule();
+        });
+      }
+
+      let labWidth = 0;
+      new ResizeObserver((entries) => {
+        const width = entries[0].contentRect.width;
+        if (width === labWidth) return;
+        labWidth = width;
+        schedule();
+      }).observe(lab);
+
+      schedule();
+    </script>
+
+    <style is:global>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      * {
+        margin: 0;
+      }
+
+      :root {
+        /* Lab chrome only. The specimens inside the frames carry the site's own
+           palette; this shell is deliberately not the site. */
+        --lab-ground: #0f1114;
+        --lab-panel: #171a1f;
+        --lab-ink: #edeeef;
+        --lab-ink-2: #a8aeb6; /* 7.0:1 on panel */
+        --lab-ink-3: #7f868f; /* 4.6:1 on panel — floor */
+        --lab-rule: #262a31;
+        --lab-mark: #00a8e8;
+        --lab-ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --lab-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, monospace;
+        --lab-gutter: clamp(1rem, 2vw, 2rem);
+      }
+
+      body {
+        background: var(--lab-ground);
+        color: var(--lab-ink);
+        font-family: var(--lab-ui);
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      /* ---- Bar ---------------------------------------------------------- */
+
+      .bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem 1.5rem;
+        padding: 0.875rem var(--lab-gutter);
+        background: color-mix(in srgb, var(--lab-ground) 88%, transparent);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--lab-rule);
+      }
+
+      .bar__id {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .bar__title {
+        font-weight: 600;
+        letter-spacing: -0.015em;
+      }
+
+      .bar__sub,
+      .bar__baseline {
+        font-family: var(--lab-mono);
+        font-size: 0.6875rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--lab-ink-3);
+      }
+
+      .bar__controls {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+      }
+
+      .bar__baseline-key {
+        color: var(--lab-mark);
+      }
+
+      /* ---- Width switch -------------------------------------------------- */
+
+      .seg {
+        display: flex;
+        padding: 2px;
+        border: 1px solid var(--lab-rule);
+        border-radius: 8px;
+        background: var(--lab-panel);
+      }
+
+      .seg__opt {
+        position: relative;
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        padding: 0.3rem 0.7rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8125rem;
+        color: var(--lab-ink-2);
+        transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1),
+          background-color 140ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .seg__opt input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .seg__opt:hover {
+        color: var(--lab-ink);
+      }
+
+      .seg__opt:has(input:checked) {
+        background: #22262d;
+        color: var(--lab-ink);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+
+      .seg__opt:has(input:focus-visible) {
+        outline: 2px solid var(--lab-mark);
+        outline-offset: 2px;
+      }
+
+      .seg__px {
+        font-family: var(--lab-mono);
+        font-size: 0.625rem;
+        letter-spacing: 0.04em;
+        color: var(--lab-ink-3);
+      }
+
+      /* ---- Columns ------------------------------------------------------- */
+
+      .lab {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--lab-gutter);
+        padding: clamp(1.25rem, 2.5vw, 2.5rem) var(--lab-gutter) 3rem;
+        align-items: start;
+      }
+
+      /* Below this the three frames scale past the point where a hero headline
+         is legible, so they stack and each gets the full width. */
+      @media (max-width: 60rem) {
+        .lab {
+          grid-template-columns: minmax(0, 1fr);
+          max-width: 46rem;
+          margin-inline: auto;
+        }
+      }
+
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 0;
+      }
+
+      .col__name {
+        font-size: clamp(1.75rem, 2.2vw, 2.5rem);
+        line-height: 1.05;
+      }
+
+      /* Each candidate's name is set in its own display face — the point of a
+         specimen sheet is that the label is evidence too. */
+      .col__name--ledger {
+        font-family: 'Newsreader Variable', Georgia, serif;
+        font-weight: 560;
+        letter-spacing: -0.02em;
+      }
+
+      .col__name--instrument {
+        font-family: 'Inter Tight Variable', system-ui, sans-serif;
+        font-weight: 720;
+        letter-spacing: -0.04em;
+      }
+
+      .col__name--specimen {
+        font-family: 'Fraunces Variable', Georgia, serif;
+        font-variation-settings: 'SOFT' 18, 'WONK' 1;
+        font-weight: 500;
+        letter-spacing: -0.016em;
+      }
+
+      .col__claim {
+        color: var(--lab-ink-2);
+        font-size: 0.9375rem;
+        max-width: 40ch;
+      }
+
+      /* ---- Frame --------------------------------------------------------- */
+
+      .slot {
+        position: relative;
+        /* Sized by script; centred so a frame narrower than its column sits in
+           the middle of it rather than hard left. */
+        margin-inline: auto;
+        max-width: 100%;
+        overflow: hidden;
+        border: 1px solid var(--lab-rule);
+        border-radius: 10px;
+        background: #f6f5f3;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      .slot__frame {
+        display: block;
+        border: 0;
+        transform-origin: 0 0;
+        /* Sized and scaled by script; these are the pre-hydration defaults so
+           the frame is never a zero-height box. */
+        width: 1440px;
+        height: 2700px;
+      }
+
+      /* ---- Roles --------------------------------------------------------- */
+
+      .roles {
+        border-top: 1px solid var(--lab-rule);
+        border-bottom: 1px solid var(--lab-rule);
+        padding-block: 0.25rem;
+      }
+
+      .roles__row {
+        display: grid;
+        grid-template-columns: 4.5rem minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: baseline;
+        padding-block: 0.5rem;
+      }
+
+      .roles__row + .roles__row {
+        border-top: 1px solid color-mix(in srgb, var(--lab-rule) 60%, transparent);
+      }
+
+      .roles dt {
+        font-family: var(--lab-mono);
+        font-size: 0.625rem;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--lab-ink-3);
+      }
+
+      .roles dd {
+        font-size: 0.9375rem;
+        color: var(--lab-ink);
+      }
+
+      /* Every family name is set in the family it names. */
+      .roles--ledger .roles__display {
+        font-family: 'Newsreader Variable', Georgia, serif;
+        font-size: 1.0625rem;
+      }
+      .roles--ledger .roles__body {
+        font-family: 'Archivo Variable', system-ui, sans-serif;
+      }
+      .roles--ledger .roles__data {
+        font-family: 'JetBrains Mono Variable', monospace;
+        font-size: 0.8125rem;
+      }
+
+      .roles--instrument .roles__display {
+        font-family: 'Inter Tight Variable', system-ui, sans-serif;
+        font-weight: 620;
+        letter-spacing: -0.02em;
+      }
+      .roles--instrument .roles__body {
+        font-family: 'Inter Variable', system-ui, sans-serif;
+        letter-spacing: -0.011em;
+      }
+      .roles--instrument .roles__data {
+        font-family: 'Geist Mono Variable', monospace;
+        font-size: 0.8125rem;
+      }
+
+      .roles--specimen .roles__display {
+        font-family: 'Fraunces Variable', Georgia, serif;
+        font-variation-settings: 'SOFT' 18, 'WONK' 1;
+        font-size: 1.0625rem;
+      }
+      .roles--specimen .roles__body {
+        font-family: 'IBM Plex Sans Variable', system-ui, sans-serif;
+      }
+      .roles--specimen .roles__data {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.8125rem;
+      }
+
+      /* ---- Argument ------------------------------------------------------ */
+
+      .col__notes {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .col__why {
+        color: var(--lab-ink-2);
+        font-size: 0.875rem;
+        line-height: 1.62;
+        max-width: 62ch;
+      }
+
+      .col__cost {
+        color: var(--lab-ink-3);
+        font-size: 0.8125rem;
+        line-height: 1.6;
+        max-width: 62ch;
+      }
+
+      .col__cost-key {
+        font-family: var(--lab-mono);
+        font-size: 0.625rem;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--lab-mark);
+        margin-right: 0.4rem;
+      }
+
+      .col__open {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        align-self: flex-start;
+        color: var(--lab-ink);
+        font-size: 0.8125rem;
+        text-decoration-color: var(--lab-rule);
+        text-underline-offset: 0.25em;
+        transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1),
+          text-decoration-color 140ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .col__open:hover {
+        color: var(--lab-mark);
+        text-decoration-color: var(--lab-mark);
+      }
+
+      .col__open:focus-visible {
+        outline: 2px solid var(--lab-mark);
+        outline-offset: 3px;
+        border-radius: 3px;
+      }
+
+      /* ---- Foot ---------------------------------------------------------- */
+
+      .foot {
+        border-top: 1px solid var(--lab-rule);
+        padding: 1.5rem var(--lab-gutter) 3rem;
+      }
+
+      .foot p {
+        max-width: 78ch;
+        color: var(--lab-ink-3);
+        font-size: 0.8125rem;
+      }
+
+      .foot code {
+        font-family: var(--lab-mono);
+        font-size: 0.75rem;
+        color: var(--lab-ink-2);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </body>
+</html>

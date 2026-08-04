@@ -164,60 +164,67 @@ import Marginalia from './Marginalia.astro';
     gap: 0.1em;
   }
 
-  /* Orange carries the secondary tier instead of translucency — the hue
-     difference against the name's ink-inverse white does the hierarchy
-     work on its own. */
+  /* The secondary tier reads as a hue difference rather than translucency.
+     Blue Light clears the dark photo scrim (~7:1) but fails the light ground
+     outright, so the typographic variant below swaps in Blue Dark instead. */
+  /* The greeting is the spoken half of the hero and stays on the sans; only the
+     name takes the serif. Two lines in one display face read as one monotone
+     block and lose the contrast that makes the name land — the h1 hands down
+     the display family, so this opts back out of it explicitly. */
   .hero__hello {
+    font-family: var(--font-sans);
+    font-variation-settings: normal;
     font-size: var(--text-xl);
-    font-weight: 500;
+    font-weight: var(--weight-hello);
     letter-spacing: -0.01em;
-    color: var(--accent-orange);
+    color: var(--accent-blue-dark);
+    animation: rise var(--dur-rise) var(--ease-out) both;
+    will-change: transform, opacity;
+  }
+
+  /* The hero's authored entrance, on the shared `rise` keyframe in global.css:
+     both lines rise straight up into full opacity on load. No scale, no blur, no
+     tracking shift — the only two properties that move are transform and
+     opacity, which is also why it stays on the compositor.
+
+     `rise` travels a fixed 16px rather than an em. At these two sizes — 28px and
+     82px — an em would move the name three times as far as the greeting and the
+     pair would read as two separate events; equal absolute travel makes the h1
+     lift as one block.
+
+     Kevin asked for a true 0 → 100% fade, which knowingly overrides DESIGN.md's
+     Never-Hide-Content Rule. It is safe in this position: pure CSS, no script and
+     no scroll gate, so it always runs and always finishes — unlike the
+     scroll-reveal that rule was written against. */
+
+  .hero--photo .hero__hello {
+    color: var(--accent-blue-light);
   }
 
   .hero__name {
+    font-family: var(--font-display);
+    font-variation-settings: var(--vf-display);
     font-size: var(--text-4xl);
-    font-weight: 680;
-    letter-spacing: -0.04em;
-    line-height: 0.95;
+    font-weight: var(--weight-display);
+    letter-spacing: var(--track-hero);
+    line-height: var(--leading-hero);
+    /* The same rise, started 150ms in. The name is still climbing while the
+       greeting finishes, so the two land as one gesture rather than as a
+       sequence — long enough to establish an order, short enough that nobody
+       waits. */
+    animation: rise var(--dur-rise) var(--ease-out) 150ms both;
+    will-change: transform, opacity;
   }
 
-  /* The one section exempt from the scroll-triggered .settle in Base.astro
-     (it's already on screen at load) gets its own arrival instead: the same
-     rise-and-fade the rest of the site uses, staggered across the two lines
-     so the name lands a beat after the greeting. Pure CSS and unconditional —
-     no IntersectionObserver needed since there's nothing to wait to scroll
-     into view. Plays regardless of prefers-reduced-motion: a deliberate call
-     for this one first-impression moment rather than the usual accessibility
-     default, since it's a single ~10px, half-second beat rather than
-     sustained or large-scale motion. The !important is required, not
-     stylistic — global.css's reduced-motion reset forces
-     `animation-duration: 0.01ms !important` on every element site-wide, and
-     only a higher-specificity !important rule can out-cascade an !important
-     one regardless of selector weight. Duration is --dur-slow doubled rather
-     than the token itself, since --dur-slow is shared with .settle
-     elsewhere on the site. */
-  .hero__hello,
-  .hero__name {
-    animation: hero-in calc(var(--dur-slow) * 2) var(--ease-out) both !important;
-  }
-
-  /* The stagger delay has to live inside its own !important shorthand too —
-     an !important shorthand always beats a plain longhand override
-     regardless of source order, so a bare `animation-delay: 100ms;` here
-     would lose to the 0s the rule above implies. */
-  .hero__name {
-    animation: hero-in calc(var(--dur-slow) * 2) var(--ease-out) 100ms both !important;
-  }
-
-  @keyframes hero-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+  /* Cancelling the animation outright is what reduced motion should do here, and
+     it is safe: `animation: none` drops both lines to their static state, which
+     is full opacity and no offset. The 0 → 100% fade only ever exists inside the
+     keyframes. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero__hello,
+    .hero__name {
+      animation: none;
+      will-change: auto;
     }
   }
-
 </style>

@@ -32,22 +32,12 @@ html {
   }
 }
 
-/* Graph-paper stock under the whole site, fading out down the page so the ruling
-   frames the opening and then gets out of the way of long reading. Fixed, so it
-   reads as the sheet the content sits on rather than as scrolling texture. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background-image:
-    repeating-linear-gradient(to right, var(--grid-line) 0 1px, transparent 1px var(--grid-step)),
-    repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px var(--grid-step));
-  /* Only the alpha of these stops matters to a mask, so this uses the palette's
-     opaque ink rather than introducing a literal that is not a real colour. */
-  mask-image: linear-gradient(to bottom, var(--ink) 0%, var(--ink) 34%, transparent 76%);
-}
+/* The site sits on plain stock. A ruled graph-paper ground used to run under
+   everything here; it was removed because a faint grid behind a whole page is
+   generic texture rather than an idea, and it reads as decoration applied to a
+   layout instead of a decision about it. The notebook is still literal in the
+   two places that earn it — the marginal line figures, which are Kevin's own
+   worked problems, and the annotation block. */
 
 body {
   background: var(--ground);
@@ -55,6 +45,7 @@ body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
+  letter-spacing: var(--track-body);
   font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -92,21 +83,28 @@ h1,
 h2,
 h3,
 h4 {
-  font-weight: 620;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--track-tight);
   line-height: var(--leading-snug);
   text-wrap: balance;
 }
 
+/* The two page-level tiers take the display face; h3/h4 stay on the sans, where
+   a section is being labelled rather than voiced. */
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-variation-settings: var(--vf-display);
+  letter-spacing: var(--track-display);
+}
+
 h1 {
   font-size: var(--text-3xl);
-  letter-spacing: var(--track-display);
   line-height: var(--leading-tight);
 }
 
 h2 {
   font-size: var(--text-2xl);
-  letter-spacing: var(--track-display);
 }
 
 h3 {
@@ -137,7 +135,7 @@ a:hover {
 }
 
 ::selection {
-  background: var(--accent-orange);
+  background: var(--accent-blue-light);
   color: var(--ink);
 }
 
@@ -163,7 +161,7 @@ a:hover {
 .label {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  font-weight: 500;
+  font-weight: var(--weight-label);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-tertiary);
@@ -197,6 +195,51 @@ a:hover {
   .settle {
     animation: none;
   }
+}
+
+/* The authored entrance, distinct from `settle`: a true 0 → 100% fade rising
+   straight up, no blur and no scale. It is the hero's arrival, and the About
+   block reuses it so the home page has one entrance gesture rather than two.
+
+   Unlike `settle` this one does hide content while it runs, which is why every
+   use is either unconditional-on-load (the hero, where it always plays and
+   always finishes) or armed by script (see `[data-rise]` in Base.astro, where
+   no JS and reduced motion both leave the content rendered final). Do not
+   attach it to anything that cannot satisfy one of those two. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Scroll-triggered `rise`, in one place so every section that takes it is the
+   same gesture. Two attributes wire a section up:
+
+     data-rise         on the section — Base.astro arms it and the observer
+                       triggers it
+     data-rise-target  on the one block that actually moves — usually the inner
+                       wrapper, so a heading and its content rise together
+                       rather than as separate events
+
+   The section keeps `settle` as its trigger class but not its animation: `rise`
+   replaces it. Nothing here is safe without `is-armed`, which only ever comes
+   from script — see the note on the keyframe above. */
+[data-rise].settle {
+  animation: none;
+}
+
+[data-rise].is-armed [data-rise-target] {
+  opacity: 0;
+}
+
+[data-rise].is-armed.settle [data-rise-target] {
+  animation: rise var(--dur-rise) var(--ease-out) var(--delay-rise) both;
+  will-change: transform, opacity;
 }
 
 .visually-hidden {

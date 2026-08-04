@@ -4,13 +4,20 @@ import { url } from '../lib/site';
 import MediaSlot from './MediaSlot.astro';
 
 /**
- * The photo owns the card; title and a one-line summary sit below it. With no
- * poster set yet, the media area is graph-paper stock tinted from `--cat`
- * rather than an empty or broken-looking box — a designed state, not a
- * placeholder apology, that gets richer the moment a real photo lands in the
- * project's frontmatter. `--cat` itself is never set here: the page rendering
- * this card sets it once, to that division's single committed accent (see
- * `PAGE_ACCENT` in `lib/site.ts`), so every card on a page agrees.
+ * The photo is the whole card; the title overlays it at the bottom, centred,
+ * on a dark scrim for legibility — the same treatment the home page's
+ * division tiles use. With no poster set yet, the media area is a flat field
+ * tinted from the structural accent (Blue Dark) rather than an empty or
+ * broken-looking box — a designed state, not a placeholder apology, that gets
+ * richer the moment a real photo lands in the project's frontmatter. Every
+ * card, on every division, carries the same fixed identity — no per-division
+ * accent.
+ *
+ * The link is a bare positioning context and `.card__frame` carries everything
+ * visible. That split is what lets the card's two vertical edges draw inward on
+ * hover: the frame's own `left`/`right` animate, so the border, the corner
+ * radius, the shadow, and the photo crop all narrow together as one object,
+ * while the grid track the link occupies never changes and no neighbour moves.
  */
 interface Props {
   project: CollectionEntry<'projects'>;
@@ -21,107 +28,116 @@ const { data } = project;
 ---
 
 <a class="card" href={url(`/projects/${project.id}`)}>
-  <div class="card__media">
-    <MediaSlot
-      image={data.poster}
-      alt={data.posterAlt ?? `${data.title} running`}
-      widths={[360, 540, 720]}
-      sizes="(min-width: 64rem) 24rem, (min-width: 40rem) 40vw, 90vw"
-    />
-  </div>
-
-  <div class="card__body">
+  <div class="card__frame">
+    <div class="card__media">
+      <MediaSlot
+        image={data.poster}
+        alt={data.posterAlt ?? `${data.title} running`}
+        widths={[360, 540, 720]}
+        sizes="(min-width: 64rem) 24rem, (min-width: 40rem) 40vw, 90vw"
+      />
+    </div>
+    <div class="card__scrim" />
     <h3 class="card__title">{data.title}</h3>
-    <p class="card__summary">{data.summary}</p>
-
-    {
-      data.credentials.length > 0 && (
-        <ul class="card__credentials">
-          {data.credentials.map((c) => (
-            <li>{c}</li>
-          ))}
-        </ul>
-      )
-    }
   </div>
 </a>
 
 <style>
+  /* The link reserves the grid cell and nothing else — no border, no ground, no
+     padding. Holding the cell still is the whole point: the frame inside it is
+     free to change width without the grid ever relaying out. */
   .card {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--rule);
-    border-top: 3px solid var(--cat);
-    background: var(--ground-raised);
-    overflow: hidden;
+    display: block;
+    aspect-ratio: 4 / 3;
     text-decoration: none;
     color: inherit;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
   }
 
-  .card:hover,
-  .card:focus-visible {
-    border-color: color-mix(in srgb, var(--cat) 42%, var(--rule));
+  /* The card as the eye sees it. `left` and `right` are the animated pair, so
+     the two vertical edges are what move; top and bottom are pinned, which
+     keeps this a change of width and not a general shrink. Layout properties
+     rather than a transform, deliberately: `scaleX` would squash the
+     photograph and the title, and a clip would cut the side borders off
+     instead of moving them. The cost is a layout pass confined to one card's
+     subtree, which is what a single hover can afford. */
+  .card__frame {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--rule);
+    overflow: hidden;
+    padding: var(--s-4);
+    box-shadow: var(--shadow-sm);
+    /* Resting values are the exit timing: the edges return faster than they
+       drew in, so releasing a card feels like a release rather than a second
+       deliberate movement. */
+    transition:
+      left var(--dur-fast) var(--ease-out),
+      right var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  .card:hover .card__frame,
+  .card:focus-visible .card__frame {
+    left: var(--card-hover-inset);
+    right: var(--card-hover-inset);
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    transition-duration: var(--dur-mid);
+  }
+
+  /* The ring belongs to the frame, not the link, or it would sit at the full
+     width while the card it is describing has drawn in. */
+  .card:focus-visible {
+    outline: none;
+  }
+
+  .card:focus-visible .card__frame {
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
+  }
+
+  /* With motion reduced the edges hold still — the shadow alone carries the
+     state. The global reduced-motion rule only collapses duration, which would
+     make this land as an instant jump in width. */
+  @media (prefers-reduced-motion: reduce) {
+    .card:hover .card__frame,
+    .card:focus-visible .card__frame {
+      left: 0;
+      right: 0;
+    }
   }
 
   .card__media {
-    aspect-ratio: 4 / 3;
-    background: var(--ground-sunken);
+    position: absolute;
+    inset: 0;
+    z-index: -2;
   }
 
-  .card__body {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    padding: var(--s-5);
+  .card__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to top,
+      rgba(22, 24, 28, 0.82) 0%,
+      rgba(22, 24, 28, 0.32) 55%,
+      rgba(22, 24, 28, 0) 100%
+    );
   }
 
   .card__title {
     font-size: var(--text-lg);
     letter-spacing: var(--track-tight);
-    color: var(--ink);
-    margin-bottom: var(--s-2);
-  }
-
-  .card:hover .card__title,
-  .card:focus-visible .card__title {
-    color: var(--link);
-  }
-
-  .card__summary {
-    color: var(--ink-secondary);
-    font-size: var(--text-sm);
-    line-height: 1.55;
-    /* Three lines, then cut cleanly — the full summary lives on the project
-       page, this is the skim. */
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .card__credentials {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--s-1) var(--s-3);
-    list-style: none;
-    padding: 0;
-    margin-top: var(--s-3);
-  }
-
-  .card__credentials li {
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    color: var(--cat-deep);
+    color: var(--ink-inverse);
+    text-align: center;
+    max-width: 34ch;
   }
 </style>

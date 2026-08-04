@@ -4,10 +4,10 @@
   project pages at a desk — both under ambient room light, both reading rather
   than monitoring. A dark ground would serve neither.
 
-  Two accents carry the identity: deep navy for structure — links, focus, the
-  primary action, the inverse ground — and burnt orange as the material that
-  rules, underlines, and marks what is active. Orange never carries type at
-  full strength; its deep variant exists for that.
+  Two accents carry the identity, both blue: a dark blue for structure — links,
+  focus, the primary action, the inverse ground — and a light blue as the
+  material that rules, underlines, and marks what is active. Light blue never
+  carries type on the page ground; it can't hold contrast there.
 */
 
 :root {
@@ -15,7 +15,7 @@
   --ground: #f6f5f3;
   --ground-raised: #ffffff;
   --ground-sunken: #ece9e6;
-  --ground-inverse: var(--accent-navy);
+  --ground-inverse: var(--accent-blue-dark);
 
   --ink: #16181c;          /* 15.8:1 on ground */
   --ink-secondary: #4e5259; /* 7.9:1  on ground */
@@ -25,20 +25,20 @@
   --rule: #e2e2df;
   --rule-strong: #cbcbc6;
 
-  /* Notebook ruling. Deliberately near the threshold of visibility: it should
-     register as paper stock, not as a grid you read. */
-  --grid-line: rgba(22, 24, 28, 0.045);
-  --grid-step: 1.75rem;
+  /* The ink the marginal line figures are drawn in. There is no grid token
+     any more: the graph-paper ground was removed from the page and from every
+     media placeholder. */
   --figure-ink: rgba(22, 24, 28, 0.1);
 
   /* ---- Accent ---------------------------------------------------------- */
-  --accent-navy: #25395a;       /* 10.6:1 on ground — links, focus, primary fill */
-  --accent-navy-deep: #16233a; /* hover/pressed navy */
-  --accent-orange: #d9762f;    /* material only — rules, borders, selection */
-  --accent-orange-deep: #a8531f; /* 4.9:1 on ground — the type-safe orange */
+  /* Exactly two accent colours in the whole system — no separate "deep"
+     tokens. The hover/pressed state below is a mix toward black, not a third
+     named colour. */
+  --accent-blue-dark: #003554;  /* 11.8:1 on ground — links, focus, primary fill */
+  --accent-blue-light: #00a8e8; /* material only — rules, borders, selection */
 
-  --link: var(--accent-navy);
-  --link-hover: var(--accent-navy-deep);
+  --link: var(--accent-blue-dark);
+  --link-hover: color-mix(in srgb, var(--accent-blue-dark) 78%, black);
 
   /* ---- Division coding ------------------------------------------------- */
   /* Wayfinding only: a rule, a dot, a label. Never a filled region, because
@@ -49,8 +49,37 @@
   --cat-games: #2d7a5f;
 
   /* ---- Type ------------------------------------------------------------ */
-  --font-sans: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Three faces, two lineages. Plex Sans and Plex Mono are one superfamily, so
+     the running prose and the reported values share skeletons and a mono value
+     sits *in* a sentence rather than on top of it. Above them, Fraunces carries
+     the voice: an authored old-style with flared stems and a wonky leg, which
+     is what keeps the name and the section headings from being a name and some
+     headings in a nice sans. Chosen from three candidates built as complete
+     systems in `/type-lab`; the other two are still there. */
+  --font-sans: 'IBM Plex Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+
+  /* SOFT is pulled most of the way to sharp and WONK is on: soft-and-straight
+     is the coffee-brand cut of this face, and sharp-and-wonky is the one that
+     reads as an engineer's own mark. The opsz axis is deliberately absent here
+     so `font-optical-sizing: auto` keeps doing its job — the hero gets the
+     high-contrast cut and a section heading gets the sturdier one, from one
+     file. */
+  --vf-display: 'SOFT' 18, 'WONK' 1;
+
+  /* Role weights, named by job rather than by number, so a face with a
+     different weight response can be dropped in without editing components.
+     Fraunces is a heavy-colour face: anything past ~550 at display size turns
+     the hero into a slab, which is why the display tier is lighter here than a
+     grotesque would need. */
+  --weight-display: 500; /* the hero name */
+  --weight-heading: 520; /* h1–h4 */
+  /* The greeting line is Plex Sans, not Fraunces, and it sits light-on-dark
+     over the photo scrim — both reasons it holds 500 rather than dropping with
+     the display tier. */
+  --weight-hello: 500;
+  --weight-label: 500;   /* tracked mono labels */
 
   /* Fluid scale. Display caps below the 6rem ceiling so a long project title
      cannot run off a phone. */
@@ -60,18 +89,29 @@
   --text-lg: clamp(1.125rem, 0.4vw + 1.05rem, 1.3125rem);
   --text-xl: clamp(1.375rem, 1vw + 1.1rem, 1.75rem);
   --text-2xl: clamp(1.75rem, 2vw + 1.25rem, 2.5rem);
-  --text-3xl: clamp(2.25rem, 3.6vw + 1.4rem, 3.75rem);
-  --text-4xl: clamp(2.75rem, 6vw + 1.25rem, 5.5rem);
+  /* Fraunces carries a tall x-height and a wide default fit, so the two display
+     steps come *down* from where a grotesque needed them and still read
+     larger. */
+  --text-3xl: clamp(2.15rem, 3.4vw + 1.35rem, 3.6rem);
+  --text-4xl: clamp(2.6rem, 5.6vw + 1.15rem, 5.1rem);
 
   --leading-tight: 1.04;
   --leading-snug: 1.2;
-  --leading-normal: 1.62;
+  /* Plex Sans runs open and slightly narrow; it wants more leading than a
+     grotesque at the same measure, and a shorter line to go with it. */
+  --leading-normal: 1.68;
+  --leading-hero: 0.94;
 
-  --track-display: -0.032em;
-  --track-tight: -0.018em;
-  --track-label: 0.08em;
+  /* A serif with brackets and flared stems collides at grotesque tracking, so
+     every display value here is far off the -0.04em floor. */
+  --track-display: -0.01em;
+  --track-hero: -0.016em;
+  --track-tight: -0.008em;
+  --track-label: 0.07em;
+  /* Plex Sans is drawn to fit; it needs no body tracking. */
+  --track-body: normal;
 
-  --measure: 68ch;
+  --measure: 66ch;
 
   /* ---- Spacing --------------------------------------------------------- */
   /* One rhythm across the whole site. Section padding is fluid so the page
@@ -110,11 +150,25 @@
   /* ---- Motion ---------------------------------------------------------- */
   /* Exponential ease-out. Everything starts visible; motion refines arrival,
      it never gates content. */
+  /* How far each vertical edge of a card draws inward when it is hovered or
+     focused. One value, shared by the project card and the home division tile,
+     so the two never drift apart. Percentages resolve against the card's own
+     width, so the gesture is proportional at every breakpoint. */
+  --card-hover-inset: 10%;
+
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 140ms;
   --dur-mid: 260ms;
   --dur-slow: 520ms;
+  /* The authored entrance (`rise`), longer than the section `settle`. One token
+     so the hero and the About block are the same gesture rather than two
+     coincidentally similar ones. */
+  --dur-rise: 720ms;
+  /* A beat between a section crossing the trigger line and its rise starting, so
+     the motion reads as a response to the scroll rather than as something that
+     was already running when you got there. */
+  --delay-rise: 100ms;
 }
 
 /* Below this the five division links plus the wordmark cannot share one line at

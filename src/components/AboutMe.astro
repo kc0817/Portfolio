@@ -1,0 +1,110 @@
+---
+import MediaSlot from './MediaSlot.astro';
+import { ABOUT_PHOTO } from '../lib/aboutPhoto';
+
+/**
+ * Sits between the hero and the division grid: text on the left, a contained
+ * photo on the right (the same MediaSlot placeholder pattern as everywhere
+ * else, so it looks finished before `src/assets/about.*` exists). Stacks to
+ * photo-below-text on narrow viewports.
+ */
+---
+
+<section class="about" aria-labelledby="about-heading" data-rise>
+  <div class="wrap about__inner" data-rise-target>
+    <div class="about__text">
+      <h2 id="about-heading">About Me</h2>
+      <p>
+        Greetings! I'm a 2nd year computer science undergrad at Purdue University, and
+        I'm passionate in integrating hardware, physics, 3D graphics, or pretty much
+        anything with code.
+      </p>
+      <p>
+        Right now I'm interning at Accord Financial Solutions as a Frontend Software
+        Developer, with the goal to modernize antiquated tax software so that Accord can
+        provide tax refund and tax advance services for US citizens during the 2027 tax
+        season. I'm also a volunteer teacher for a 3-week long robotics programming class
+        for 10 middle and high school students to support local robotics teams in my
+        area.
+      </p>
+    </div>
+
+    <div class="about__media">
+      <MediaSlot
+        image={ABOUT_PHOTO}
+        alt="Kevin Chen sitting on a granite outcrop in Acadia National Park, a forested valley below him and the bay and its islands on the horizon behind."
+        widths={[480, 720, 960]}
+        sizes="(min-width: 46rem) 40vw, 90vw"
+        iconSize={36}
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    padding-block: var(--section-y);
+  }
+
+  /* The scroll-triggered rise itself lives in global.css, wired by the
+     `data-rise` / `data-rise-target` pair in the markup above. `about__inner` is
+     the target rather than its two children, so the bio and the photo move as
+     one block — exactly in step, and one composited layer instead of two. */
+
+  .about__inner {
+    display: grid;
+    gap: var(--s-7);
+  }
+
+  @media (min-width: 46rem) {
+    .about__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: var(--s-9);
+    }
+
+    /* Text first in the markup (so it reads before the photo with no CSS),
+       photo on the right visually. */
+    .about__media {
+      order: 2;
+    }
+  }
+
+  .about__text h2 {
+    margin-bottom: var(--s-5);
+  }
+
+  .about__text p {
+    color: var(--ink-secondary);
+    max-width: 60ch;
+  }
+
+  .about__text p + p {
+    margin-top: var(--s-4);
+  }
+
+  /* A landscape band rather than a portrait panel. At 4/5 across the full column
+     the photo ran 660px tall on a laptop — taller than the bio beside it and
+     tall enough that the section could not be taken in at once. 3/2 is the
+     ratio a phone shoots in, so it also asks less of the photo Kevin will
+     eventually drop in than a portrait crop would. */
+  .about__media {
+    aspect-ratio: 3 / 2;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Two-column only: hold the frame at 30rem and anchor it to the column's
+     inline end, so it narrows away from the text rather than away from the page
+     edge and the right gutter stays constant. Stacked, it takes the full width —
+     a narrowed, right-anchored band under full-width prose would read as a
+     mistake. */
+  @media (min-width: 46rem) {
+    .about__media {
+      width: 30rem;
+      max-width: 100%;
+      margin-inline-start: auto;
+    }
+  }
+</style>

@@ -14,7 +14,18 @@ export default defineConfig({
   site: SITE,
   base: BASE,
   trailingSlash: 'ignore',
-  integrations: [mdx(), sitemap()],
+  server: {
+    port: Number(process.env.PORT) || 4325,
+  },
+  devToolbar: {
+    enabled: false,
+  },
+  integrations: [
+    mdx(),
+    // /type-lab is the internal typography comparison, not a page of the site.
+    // It already carries `noindex`; this keeps it out of the sitemap too.
+    sitemap({ filter: (page) => !page.includes('/type-lab') }),
+  ],
   build: {
     // Emit `/projects/foo/index.html` so links work without server rewrites.
     format: 'directory',

@@ -3,9 +3,10 @@ import MediaSlot from './MediaSlot.astro';
 
 /**
  * A row of empty photo slots for media that has not been dropped in yet.
- * Neutral graph-paper stock rather than a division tint, since a gallery
- * isn't tied to one project — swap each slot for a real `<img>` as photos
- * become available; nothing else about the layout needs to change.
+ * Each slot is a `MediaSlot`, so it renders the same flat Blue-Dark-washed
+ * field as every other empty media area on the site rather than a texture or
+ * a broken image. Pass a real photo to a slot as one becomes available;
+ * nothing else about the layout needs to change.
  */
 interface Props {
   count: number;
@@ -36,7 +37,7 @@ const slots = Array.from({ length: count });
   .gallery__slot {
     aspect-ratio: 1 / 1;
     border-radius: var(--radius-md);
-    border: 1px dashed var(--rule-strong);
+    border: 2px dashed var(--rule-strong);
     overflow: hidden;
   }
 </style>

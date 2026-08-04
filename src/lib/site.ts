@@ -51,34 +51,6 @@ export const CATEGORY_META: Record<
   },
 };
 
-/**
- * Every division page (and every project page within it) commits to exactly
- * one of the site's two accents rather than its own tertiary hue — see
- * DESIGN.md's "One Accent Per Division Page" rule. The home page is the one
- * surface that mixes both.
- */
-export const PAGE_ACCENT: Record<Category, 'orange' | 'navy'> = {
-  robotics: 'orange',
-  research: 'navy',
-  math: 'orange',
-  games: 'navy',
-};
-
-/**
- * `--cat` for a division page's committed accent, full strength — safe for
- * rules, borders, and markers, never for type. `--cat-deep` is the type-safe
- * partner: orange needs its darkened variant to hold 4.5:1, navy already
- * clears that on its own so it's reused as-is. Both are set once per page
- * (the category page's own wrapper, and `ProjectDetail`'s article) and
- * consumed everywhere else — cards, the intro, credentials — via plain
- * `var(--cat)` / `var(--cat-deep)`.
- */
-export function accentVars(category: Category): string {
-  const accent = PAGE_ACCENT[category];
-  const deep = accent === 'orange' ? 'var(--accent-orange-deep)' : 'var(--accent-navy)';
-  return `--cat: var(--accent-${accent}); --cat-deep: ${deep};`;
-}
-
 /** Resolve a path against Astro's configured base so links survive a domain move. */
 export function url(path: string): string {
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');

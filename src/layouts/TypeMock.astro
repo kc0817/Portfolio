@@ -1,0 +1,102 @@
+---
+/**
+ * Home-page mock for the /type-lab comparison, one render per candidate type
+ * system. Deliberately not `Base.astro`: this route carries no canonical URL,
+ * no sitemap entry, and no live-reload injection, and it loads every candidate
+ * font family so the three frames can be compared without three cold starts.
+ *
+ * Delete this layout, `src/styles/typesets.css`, `src/lib/typesets.ts`, and
+ * `src/pages/type-lab/` once a set is chosen, and fold the winner's tokens into
+ * `src/styles/tokens.css`.
+ */
+import '@fontsource-variable/archivo';
+import '@fontsource-variable/jetbrains-mono';
+
+// Ledger
+import '@fontsource-variable/newsreader/opsz.css';
+
+// Instrument
+import '@fontsource-variable/inter/opsz.css';
+import '@fontsource-variable/inter-tight';
+import '@fontsource-variable/geist-mono';
+
+// Specimen — `full.css` is the only build carrying the SOFT and WONK axes.
+import '@fontsource-variable/fraunces/full.css';
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+
+import '../styles/global.css';
+import '../styles/typesets.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { TYPESET_BY_ID } from '../lib/typesets';
+import { PORTRAIT } from '../lib/portrait';
+
+interface Props {
+  set: string;
+}
+
+const { set } = Astro.props;
+const typeset = TYPESET_BY_ID[set];
+---
+
+<!doctype html>
+<html lang="en" data-typeset={set} data-preview>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{typeset.name} — type mock</title>
+    <meta name="robots" content="noindex, nofollow" />
+  </head>
+  <body>
+    <SiteHeader transparent={Boolean(PORTRAIT)} />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>
+
+<style is:global>
+  /*
+    The frame this page renders into is sized to its own content, so a hero at
+    `100svh` would chase its own viewport height forever. Pinning it to a fixed
+    preview height breaks the loop and — more usefully — gives all three frames
+    an identical hero box, so what differs between them is the type and nothing
+    else.
+
+    The doubled attribute is deliberate: `Hero.astro`'s scoped rule carries
+    Astro's `data-astro-cid-*` attribute, and this override has to outrank it
+    without `!important`.
+  */
+  [data-preview][data-preview] .hero--photo {
+    min-height: var(--preview-hero-h, 46rem);
+  }
+
+  /* Nothing in a scaled-down frame should animate on arrival: the frames are
+     read as still specimens, side by side. */
+  [data-preview] .settle {
+    animation: none;
+  }
+</style>
+
+<script>
+  // The lab page sizes each frame to its content. Reporting the height rather
+  // than letting the parent read `contentDocument` keeps the frames working if
+  // they are ever served from a different origin.
+  const report = () => {
+    parent.postMessage(
+      { type: 'type-mock-height', height: document.documentElement.scrollHeight },
+      '*',
+    );
+  };
+
+  // `body` rather than `documentElement`: the root element's observed box does
+  // not reliably change when the document reflows, so observing it misses the
+  // reflow that follows a width change in the lab.
+  new ResizeObserver(report).observe(document.body);
+  addEventListener('load', report);
+  document.fonts.ready.then(report);
+  report();
+</script>

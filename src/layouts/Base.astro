@@ -1,6 +1,22 @@
 ---
-import '@fontsource-variable/archivo';
-import '@fontsource-variable/jetbrains-mono';
+// `full.css` is the only Fraunces build carrying both the WONK axis that
+// `--vf-display` sets and the `opsz` axis that `font-optical-sizing: auto`
+// needs. Optical sizing is most of why this face was worth taking, since the
+// same file has to serve an 82px hero and a 40px section heading.
+//
+// It costs 121 KB for the latin subset against 37 KB for `wonk.css`, which
+// carries weight and WONK but no optical sizing. If the payload ever has to
+// come down, that swap is the lever: drop the `'SOFT' 18` from `--vf-display`
+// (a small move off the default anyway) and accept one optical cut at every
+// size. Nothing blocks on it either way. Every face here is
+// `font-display: swap`, and the Georgia fallback is a serif of similar
+// proportion, so the swap is a shift rather than a reflow.
+import '@fontsource-variable/fraunces/full.css';
+import '@fontsource-variable/ibm-plex-sans';
+// Plex Mono has no variable build. Only the two weights the system actually
+// uses are loaded: 400 for inline code, 500 for every tracked label.
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
 import '../styles/global.css';
 import { SITE, url } from '../lib/site';
 import SiteHeader from '../components/SiteHeader.astro';
@@ -50,8 +66,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://kc0817.gith
       undifferentiated nine-equal-cards grid; work is ranked and divided.
       OWN-WORLD: Light only. Near-white ground, near-black ink, cool neutral
       rules, Purdue old gold as material (rules, active marks, focus) never as
-      type; four muted division hues for wayfinding only. Archivo throughout,
-      JetBrains Mono for real data. One spacing rhythm, offset-plus-blur depth.
+      type; four muted division hues for wayfinding only. Fraunces on the two
+      display tiers only, IBM Plex Sans for everything read, IBM Plex Mono for
+      real data. One spacing rhythm, offset-plus-blur depth.
       STORY: A visitor learns who Kevin is, sees four demos running, and enters
       the division that matches what they came to evaluate.
       FIRST VIEWPORT: Full-bleed portrait, "Hello everyone, I'm Kevin Chen"
@@ -77,6 +94,18 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://kc0817.gith
       if ('IntersectionObserver' in window && !still.matches) {
         const targets = document.querySelectorAll<HTMLElement>('main > section, main > article > section');
 
+        // A section marked [data-rise] takes the authored `rise` entrance instead
+        // of `settle`, and `rise` starts from opacity 0 — so it has to be hidden
+        // here rather than in the stylesheet. Arming from script is what keeps
+        // the Never-Hide-Content guarantee: no JS, no IntersectionObserver, or
+        // reduced motion all skip this block entirely and the section renders in
+        // its finished state. It runs in the same task as the observer setup, so
+        // the armed state is in place before the first paint and the section
+        // never flashes in before it rises.
+        document
+          .querySelectorAll<HTMLElement>('main [data-rise]')
+          .forEach((el) => el.classList.add('is-armed'));
+
         const observer = new IntersectionObserver(
           (entries) => {
             for (const entry of entries) {
@@ -93,5 +122,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://kc0817.gith
         [...targets].slice(1).forEach((el) => observer.observe(el));
       }
     </script>
-  </body>
+  <!-- impeccable-live-start -->
+<script is:inline src="http://localhost:8400/live.js?token=d0e2b791-53ae-45fc-9a55-595672082ec5"></script>
+<!-- impeccable-live-end -->
+</body>
 </html>

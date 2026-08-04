@@ -5,54 +5,52 @@ colors:
   ground: "#f6f5f3"
   ground-raised: "#ffffff"
   ground-sunken: "#ece9e6"
-  ground-inverse: "#25395a"
+  ground-inverse: "#003554"
   ink: "#16181c"
   ink-secondary: "#4e5259"
   ink-tertiary: "#6d7178"
   ink-inverse: "#f7f7f6"
   rule: "#e2e2df"
   rule-strong: "#cbcbc6"
-  accent-navy: "#25395a"
-  accent-navy-deep: "#16233a"
-  accent-orange: "#d9762f"
-  accent-orange-deep: "#a8531f"
-  link: "#25395a"
-  link-hover: "#16233a"
+  accent-blue-dark: "#003554"
+  accent-blue-light: "#00a8e8"
+  link: "#003554"
+  link-hover: "#002942"
   division-robotics: "#b03b2e"
   division-research: "#2f5f8f"
   division-math: "#6a5192"
   division-games: "#2d7a5f"
 typography:
   display:
-    fontFamily: "Archivo Variable, system-ui, sans-serif"
-    fontSize: "clamp(2.75rem, 6vw + 1.25rem, 5.5rem)"
-    fontWeight: 680
-    lineHeight: 0.95
-    letterSpacing: "-0.04em"
+    fontFamily: "Fraunces Variable, Iowan Old Style, Georgia, serif"
+    fontSize: "clamp(2.6rem, 5.6vw + 1.15rem, 5.1rem)"
+    fontWeight: 500
+    lineHeight: 0.94
+    letterSpacing: "-0.016em"
   headline:
-    fontFamily: "Archivo Variable, system-ui, sans-serif"
-    fontSize: "clamp(2.25rem, 3.6vw + 1.4rem, 3.75rem)"
-    fontWeight: 620
-    lineHeight: 1.2
-    letterSpacing: "-0.038em"
+    fontFamily: "Fraunces Variable, Iowan Old Style, Georgia, serif"
+    fontSize: "clamp(2.15rem, 3.4vw + 1.35rem, 3.6rem)"
+    fontWeight: 520
+    lineHeight: 1.04
+    letterSpacing: "-0.01em"
   title:
-    fontFamily: "Archivo Variable, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans Variable, system-ui, sans-serif"
     fontSize: "clamp(1.375rem, 1vw + 1.1rem, 1.75rem)"
-    fontWeight: 620
+    fontWeight: 520
     lineHeight: 1.2
-    letterSpacing: "-0.018em"
+    letterSpacing: "-0.008em"
   body:
-    fontFamily: "Archivo Variable, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans Variable, system-ui, sans-serif"
     fontSize: "1.0625rem"
     fontWeight: 400
-    lineHeight: 1.62
+    lineHeight: 1.68
     letterSpacing: "normal"
   label:
-    fontFamily: "JetBrains Mono Variable, ui-monospace, monospace"
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
     fontSize: "0.75rem"
     fontWeight: 500
     lineHeight: 1.4
-    letterSpacing: "0.08em"
+    letterSpacing: "0.07em"
 rounded:
   sm: "3px"
   md: "6px"
@@ -108,29 +106,42 @@ phone in an office and a laptop at a desk, both under room light, both reading
 rather than monitoring; a dark ground would have served neither. Division pages
 lead with a photo-forward card grid — the work is largely still uncaptured on
 camera, so the media slot is designed to be honest and complete before a single
-photo lands, and to improve the moment one does. Two
-accents carry the identity: a deep navy that does the structural work — links,
-focus, the primary action, the reel stage — and a burnt orange that only ever
-marks, the way the old material role did: a rule above a lede, the underline on
-an active link outside a division, the border on an annotation, the result that
-has been verified.
+photo lands, and to improve the moment one does. Two accents carry the identity:
+a dark blue that does the structural work — links, focus, the primary action,
+the reel stage — and a light blue that only ever marks, the way the old
+material role did: the nav bar's active/hover underline and the border on an
+annotation. Neither accent tints a card any longer; every card is a plain
+1px-rule container, its identity carried by its photo and type rather than a
+top border.
 
-The home page is deliberately short — a greeting, then the four divisions. It
-carries no descriptor line, no credential row, no thesis statement, and no
-selected-work list, because Kevin's instruction was that the work should do the
-introducing. Claims live on the project pages, attached to what earned them.
+The home page is a greeting, an About Me section, then the four divisions. It
+carries no credential row, no thesis statement, and no selected-work list — the
+project pages carry those claims, attached to the work that earned them — but
+Kevin's own short bio now runs directly beneath the hero, in his own words
+rather than a project-page fact.
 
-Four division hues exist for wayfinding in the site's chrome — the nav, the
-404 page — tinting a mark or a small border, never a filled region. A
-division's own page commits to one of the two core accents instead, per the
-One-Accent-Per-Division-Page Rule.
+Four division hues exist for wayfinding in the 404 page's list of divisions —
+tinting a small border, never a filled region. Everywhere else, wayfinding by
+division hue has been retired: every project card, on every division page,
+carries the same dark-blue identity, and the nav bar's own active/hover mark is
+a fixed light blue regardless of which division it points to.
 
-The notebook is literal in three places and nowhere else: the page sits on
-graph-paper stock that fades out as you scroll into long reading; line figures
-sketched in the margins are worked-out problems rather than decoration; and an
-orange-topped annotation block carries contribution scope the way a margin note
+The notebook is literal in two places and nowhere else: line figures sketched in
+the margins are worked-out problems rather than decoration, and a
+light-blue-topped annotation block carries contribution scope the way a margin note
 would. What the system deliberately does not take from the notebook is
 untidiness — nothing is skewed, torn, taped, or set in a handwriting face.
+
+There was a third: a faint graph-paper ground under the whole page, and the same
+ruling inside every empty media slot. **It has been removed everywhere and must
+not come back.** A low-contrast grid behind a whole layout is generic texture
+rather than an idea — it is decoration applied *to* a design instead of a
+decision *in* one, and it is one of the most recognisable tells of a page that
+was assembled rather than composed. The site sits on plain stock now. Empty
+media slots are a flat sunken field tinted 7% from Blue Dark, which is the same
+tonal move the system already uses to separate a section, at the scale of a
+picture. The notebook survives in the figures and the annotation, which earn it
+by carrying real content.
 
 **Benchmark.** The craft bar is `lucas-boyle.com` and `stevenf7.github.io`. One
 behaviour is a deliberate divergence: the first ships its content at zero opacity
@@ -143,9 +154,9 @@ blank page. Here, motion never gates content — the settle animation floors at
 - Light ground, near-black ink, cool neutral rules; no dark mode
 - Ruled lists as the primary structure; cards only as selectors
 - One spacing rhythm across every surface, more space above a heading than below
-- Navy carries structure; orange is material, never type
+- Dark blue carries structure; light blue is material, never type
 - Monospace strictly for real data — years, languages, ranks, counts
-- Graph-paper stock beneath everything, masked away before it can disturb reading
+- Plain stock beneath everything; no page-wide texture, pattern, or grid
 - Marginal line figures drawn from Kevin's own problems, never stock engineering art
 - Every media-bearing surface is designed to be complete with no media present
 - Motion never hides content, on any surface, for any duration
@@ -153,36 +164,37 @@ blank page. Here, motion never gates content — the settle animation floors at
 ## Colors
 
 A neutral, near-white reading surface — no warm cream, no off-white with a
-yellow cast — carrying two accents: a structural navy and a material orange.
-Four muted hues remain for wayfinding only.
+yellow cast — carrying exactly two accents, both blue: a dark, structural blue
+and a light, material blue. One muted-hue set remains, confined to a single
+piece of chrome, for wayfinding only.
 
 ### Primary
 
-- **Navy** (`#25395a`): the structural accent. Every interactive link, the
-  focus ring, the primary button fill (the live-demo call to action), and the
-  demo reel stage's ground all resolve to this one colour. 10.6:1 on ground —
-  safe at any text size.
-- **Navy Deep** (`#16233a`): the hover/pressed state for anything navy.
+- **Blue Dark** (`#003554`): the structural accent. Every interactive link,
+  the focus ring, the primary button fill (the live-demo call to action), and
+  the demo reel stage's ground all resolve to this one colour. 11.8:1 on
+  ground — safe at any text size.
+  Its hover/pressed state is the same colour mixed 22% toward black; there is
+  no separate named token for it.
 
 ### Secondary
 
-- **Orange** (`#d9762f`): the material accent, used only as a rule, a border,
-  or a highlight — never as type. It rules above the About lede, borders the
-  contribution annotation, marks the active nav underline outside a division,
-  and carries the text selection highlight. It cannot hold 4.5:1 against
-  ground at type sizes, which is why it never sets type directly.
-- **Orange Deep** (`#a8531f`): the type-safe orange, reserved for verified
-  competitive results (`#1 in RP after World Championship`) and the underline
-  that appears when a contact link is hovered. 4.9:1 on ground.
+- **Blue Light** (`#00a8e8`): the material accent, used only as a rule, a
+  border, or a highlight — never as type on the light ground. It borders the
+  contribution annotation, marks the nav bar's active/hover underline on
+  every page regardless of division, and carries the text selection
+  highlight. It cannot hold
+  4.5:1 (or even the 3:1 large-text floor) against ground, so it never sets
+  type there — it is used as light-on-dark type only where the ground behind
+  it is already dark (the photo hero's scrim, a dark-blue tile), where it
+  clears 4.7:1 or better.
 
 ### Tertiary
 
-The four division hues. Site chrome outside a division's own page still uses
-them — the nav's active-division mark, the 404 page's list of divisions — as
-a hover mark or a small border. Neither the home page's Division Grid (Navy
-and Orange only, so the core identity reads before a division is chosen) nor
-a division's own page (which commits to one accent per the
-One-Accent-Per-Division-Page Rule below) uses them anymore.
+Four muted division hues — Competition Red, Measured Blue, Derivation Violet,
+Playfield Green — survive in exactly one place: the 404 page's list of
+divisions, as a small left border. They no longer appear on the nav bar, on a
+project card, or on a division's own page — see the Named Rules below.
 
 - **Competition Red** (`#b03b2e`): Robotics
 - **Measured Blue** (`#2f5f8f`): Research
@@ -207,62 +219,97 @@ One-Accent-Per-Division-Page Rule below) uses them anymore.
 
 ### Named Rules
 
-**The Orange-Is-Material Rule.** Orange is a rule, a border, or a highlight —
-never a letterform. At the sizes this system sets type, `#d9762f` cannot hold
-4.5:1 against ground, so if orange text is wanted the answer is Orange Deep or a
-different idea.
+**The Light-Blue-Is-Material Rule.** Blue Light is a rule, a border, or a
+highlight — never a letterform on the light ground. At the sizes this system
+sets type, `#00a8e8` cannot hold 3:1 against ground, so if light-blue text is
+wanted on the page ground, the answer is Blue Dark or a different idea. The one
+exception is type set directly on a dark surface (the photo hero's scrim, a
+dark-blue tile), where Blue Light is the one that reads and Blue Dark would
+disappear.
 
-**The Wayfinding-Only Rule.** A division hue may tint a rule, a marker, a border,
-or a small label at full strength. It may also tint a card's background or media
-area as a faint wash — 5–8% mixed into a neutral, the same treatment a selected
-selector card already used — but never past that into a saturated or opaque
-fill. If a surface needs a ground that is not neutral and no division applies,
-it uses a tonal neutral instead.
+**The Wayfinding-Only Rule.** A division hue — confined to the 404 page's list
+of divisions — may tint a small border or label at full strength, and nothing
+more. It no longer tints a card, a media area, or the nav bar; those surfaces
+are uniformly the two core accents now.
 
-**The Navy-Means-Clickable Rule.** Navy appears on interactive text, focus, and
-the primary action, and nothing else. No decorative use, ever.
+**The Blue-Means-Clickable Rule.** Blue Dark appears on interactive text,
+focus, and the primary action, and nothing else. No decorative use, ever.
 
-**The One-Accent-Per-Division-Page Rule.** The home page is the one surface
-that mixes both accents. Every division page, and every project page within
-it, commits to exactly one: Robotics is orange-only, Research is blue-only
-(navy), Math Explorations is orange-only, Games is blue-only (navy). None of
-the four uses its own tertiary division hue for this within its own page —
-that hue is now confined to site chrome outside the page itself (the nav's
-active-division mark, the 404 page's list of divisions). Within a division's
-page, `--cat` is set once, to that division's committed accent, and
-everything that used to read the tertiary hue there (a project card's border,
-the credentials list, the contribution annotation's border) reads `--cat`
-instead. `PAGE_ACCENT` in `lib/site.ts` is the one place this assignment
-lives; `accentVars()` next to it sets both `--cat` and its type-safe partner
-`--cat-deep` together.
+**One accent per role, everywhere.** Every project card, on every division
+page, carries the same identity — media tint and type-safe credentials —
+with no per-division variation and no top-border accent. The nav bar's
+active/hover underline is Blue Light on every page, independent of division.
+There is no longer a page-level accent assignment to track: `PAGE_ACCENT` and
+`accentVars()` in `lib/site.ts`, and the `--cat` custom property they set,
+have been removed along with the division-hue wayfinding they used to carry
+onto cards.
 
 ## Typography
 
-**Display Font:** Archivo Variable (with system-ui, sans-serif)
-**Body Font:** Archivo Variable
-**Label/Mono Font:** JetBrains Mono Variable (with ui-monospace, monospace)
+**Display Font:** Fraunces Variable (with Iowan Old Style, Georgia, serif)
+**Body Font:** IBM Plex Sans Variable (with system-ui, sans-serif)
+**Label/Mono Font:** IBM Plex Mono (with ui-monospace, monospace)
 
-**Character:** One grotesque doing everything, tightened hard at display sizes
-and left alone at reading sizes, against a mono used only where a value is being
-reported. The pairing is plain on purpose: the work is the interesting thing, and
-a display face with opinions would be competing with a state championship.
+**Character:** Three faces, two lineages. Plex Sans and Plex Mono are one
+superfamily, so running prose and reported values share skeletons and a mono
+value sits *in* a sentence rather than on top of it — the engineering-
+documentation register, humanist and unfussy, doing the informational work.
+Above them Fraunces carries the voice: an authored old-style with flared stems,
+a wonky leg, and a real optical-size axis, so the name in the hero and the
+section headings are a mark rather than a name in a nice sans. The previous
+system — one grotesque doing everything — was deliberately plain, and the
+trade was legibility for anonymity; this pairing keeps the plainness where a
+recruiter is skimming and spends the character where the page introduces
+itself.
+
+Chosen from three complete candidate systems built at `/type-lab` (Ledger:
+Newsreader + Archivo; Instrument: Inter Tight + Inter + Geist Mono; Specimen,
+this one). The two rejected sets are still renderable there, as the record of
+what the decision was made against.
+
+### Fraunces settings
+
+The display face is set with `font-variation-settings: 'SOFT' 18, 'WONK' 1` —
+pulled most of the way toward sharp, with the wonk on. Soft-and-straight is
+this face's coffee-brand cut; sharp-and-wonky is the one that reads as an
+engineer's own mark. The `opsz` axis is deliberately *not* pinned, so
+`font-optical-sizing: auto` gives the hero the high-contrast cut and a section
+heading the sturdier one from the same file.
+
+Fraunces carries far more visual mass per unit of weight than a grotesque, and
+its brackets and flared stems collide under grotesque tracking. Both
+corrections are in the tokens: the display weights drop (680 → 500) and every
+display tracking value relaxes to roughly a quarter of what Archivo took. Its
+tall x-height and wide fit mean the two display *sizes* come down as well, and
+still read larger.
 
 ### Hierarchy
 
-- **Display** (680, `clamp(2.75rem, 6vw + 1.25rem, 5.5rem)`, 0.95, -0.04em):
-  the name in the hero and division titles. One per page.
-- **Headline** (620, `clamp(2.25rem, 3.6vw + 1.4rem, 3.75rem)`, -0.038em):
-  project titles.
-- **Title** (620, `clamp(1.375rem, 1vw + 1.1rem, 1.75rem)`, -0.018em): section
-  headings and list entry titles.
-- **Body** (400, 1.0625rem, 1.62): all prose. Measure held to 68ch; summaries to
-  62ch; footer and empty-state copy to roughly 34–52ch.
-- **Label** (500, 0.75rem, 0.08em, uppercase, mono): years, languages, ranks,
-  counts, division names, field labels.
+- **Display** (Fraunces, 500, `clamp(2.6rem, 5.6vw + 1.15rem, 5.1rem)`, 0.94,
+  -0.016em): the name in the hero and division titles. One per page.
+- **Headline** (Fraunces, 520, `clamp(2.15rem, 3.4vw + 1.35rem, 3.6rem)`,
+  -0.01em): project titles and section headings — `h1` and `h2`, the two tiers
+  that take the display face.
+- **Title** (Plex Sans, 520, `clamp(1.375rem, 1vw + 1.1rem, 1.75rem)`,
+  -0.008em): `h3`/`h4`, list entry titles, division tile labels. These stay on
+  the sans: at this size a section is being *labelled*, not voiced, and a third
+  serif tier would blunt the two above it.
+- **Body** (Plex Sans, 400, 1.0625rem, 1.68): all prose. Plex Sans runs open and
+  slightly narrow, so it takes more leading and a shorter line than the
+  grotesque did — measure held to 66ch; summaries to 62ch; footer and
+  empty-state copy to roughly 34–52ch.
+- **Label** (Plex Mono, 500, 0.75rem, 0.07em, uppercase): years, languages,
+  ranks, counts, division names, field labels. Tracking comes in from 0.08em
+  because Plex Mono is drawn wider than JetBrains was.
 
 ### Named Rules
 
-**The Mono-Means-Measured Rule.** JetBrains Mono appears only where a real value
+**The Serif-Is-The-Voice Rule.** Fraunces appears on exactly two tiers — the
+hero name and `h1`/`h2` — and nowhere else. It is not a body face, not a label
+face, and not a button face. If a third thing wants to be set in it, the answer
+is that the page has too many voices, not that the rule should bend.
+
+**The Mono-Means-Measured Rule.** IBM Plex Mono appears only where a real value
 is reported — a year, a language, a rank, a project count, a field label. It is
 never a texture for "technical". If a mono label has no value behind it, it
 should be body text.
@@ -315,6 +362,30 @@ glowing off it.
 **The Flat-At-Rest Rule.** Surfaces are flat until something happens to them.
 The reel stage is the single exception, because it is a display.
 
+**The Drawing-In Rule.** A card does not rise when you point at it. Its two
+vertical edges draw inward by `--card-hover-inset` (10% of the card's own
+width per side, so 20% narrower in total), and slide back out on release. The
+height never changes; this is a change of width, not a shrink. Both card
+surfaces — the project card and the home division tile — share the one token
+and move identically.
+
+The hover lift it replaced was the generic gesture every card grid on the web
+performs, and it said nothing about this card in particular. Drawing in reads
+as the card gathering itself toward the thing you are about to open, and it
+re-crops the photograph while it moves, so the surface is doing something
+rather than translating.
+
+Implementation, which is load-bearing: the link is a bare positioning context
+and a `__frame` child carries every visible property, with the frame's own
+`left` and `right` animated. The grid cell therefore never changes size and no
+neighbour ever moves. It is a layout animation rather than a transform on
+purpose — `scaleX` would squash the photograph and the title, and a clip would
+sever the side borders instead of moving them — and the cost stays inside one
+card's subtree. Entry runs at `--dur-mid`, exit at `--dur-fast`, so release is
+quicker than engagement. Under `prefers-reduced-motion` the edges hold still
+and the shadow alone carries the state, because the global reduced-motion rule
+only collapses duration and would otherwise land this as an instant jump.
+
 **The Never-Hide-Content Rule.** No animation may start from `opacity: 0`, and no
 content may depend on script or scroll to become readable. The `settle` entry
 animation floors at 0.55 opacity, is applied only by JavaScript, is never applied
@@ -324,21 +395,21 @@ to the first section on screen, and does nothing under `prefers-reduced-motion`.
 
 Small radii throughout: 3px for inline targets, 6px for cards, buttons, and
 annotations, 10px for the reel stage and full-bleed imagery. Nothing is pill-
-shaped and nothing is a circle. Borders are 1px hairlines; the only heavier
-strokes in the system are the 3px division rule at the top of a section head and
-the 2–3px orange rule above a lede or annotation, both of which are structural marks rather
-than decoration.
+shaped and nothing is a circle. Borders are 1px hairlines everywhere, including
+every card; the one heavier stroke left in the system is the 2px light-blue
+rule above the contribution annotation, a structural mark rather than
+decoration.
 
 ## Components
 
 ### Buttons
 
 - **Shape:** gently rounded (6px), never pill.
-- **Primary:** navy ground (`#25395a`), inverse text, `0.75rem 1.5rem`. One per
-  page head, always the live demo.
+- **Primary:** dark-blue ground (`#003554`), inverse text, `0.75rem 1.5rem`.
+  One per page head, always the live demo.
 - **Secondary:** raised white on a strong-rule border, ink text, same padding.
 - **Hover / Focus:** border darkens to tertiary ink, Lifted shadow, a 1px rise.
-  Focus is a 2px Navy ring at 2px offset.
+  Focus is a 2px Blue Dark ring at 2px offset.
 
 ### Cards / Containers
 
@@ -349,19 +420,21 @@ project card is the one place a card is page structure.
   **Border:** 1px rule. **Selected:** border and background tint from the
   division hue (5% mix), ink-strength title, Resting shadow.
 - **Project card — Corner Style:** 10px, matching the reel/division-grid
-  tiles. **Border:** 1px rule, 3px top border in the page's committed accent
-  (`--cat`). **Media area:** 4:3, graph-paper with a 7% `--cat` wash when no
-  poster is set. **Hover:** border and title tint from `--cat`, Lifted
-  shadow, a 2px rise.
+  tiles. **Border:** 1px rule on every side, no top-border accent, fixed on
+  every card regardless of division. **Media area:** 4:3, a flat sunken field
+  washed 7% from Blue Dark when no poster is set. **Hover:** the two vertical
+  edges draw inward (see The Drawing-In Rule below), plus Lifted shadow.
 - **Internal Padding:** `1rem` for selectors, `1.5rem` for annotations and
   neighbour links, `1.5rem` for a project card's text block below its photo.
 
 ### Navigation
 
 Small (0.8125rem), 520-weight, secondary ink. The active and hovered state is a
-2px underline that scales out from the left over 260ms — orange on pages without
-a division, the division hue on pages with one. Two rows below `32rem`, with all
-five destinations visible; there is no drawer.
+2px underline that scales out from the left over 260ms — Blue Light on every
+page, regardless of division. Two rows below `32rem`, with all
+four destinations visible; there is no drawer. There is no longer a fifth,
+non-division link — the About page and its nav entry have been retired in
+favour of the home page's own About Me section.
 
 ### Page Intro (signature)
 
@@ -375,8 +448,8 @@ photo above it. A division page's title is just the division name; a project
 page's title carries a small division-name eyebrow above it, linking back to
 that division — the one eyebrow the system permits, because it is a working
 destination, not decoration. With no photo set, `MediaSlot` falls back to the
-same graph-paper-and-`--cat`-wash placeholder the project card uses, at a
-larger size.
+same flat Blue-Dark-washed sunken field the project card uses, at a larger
+size.
 
 Research is a deliberate exception: it has exactly one project, so
 `/research` renders that project's own page in full — its own photo, title,
@@ -388,14 +461,14 @@ reason; see the note in `projects/[...id].astro`.
 
 The system's primary structure on a division page, superseding an earlier
 ruled-list version. A photo owns the top and the bulk of the card; title and a
-three-line-clamped summary sit below it. A 3px division-hue top border is the
-wayfinding mark that used to live on the division page's head band, now
-carried by the Page Intro above instead. With no poster set, the media slot
-is graph-paper stock tinted 7% from the division rather than an empty or
-broken-looking box, so the card is designed to be complete before a photo
-exists and richer the moment one is dropped into frontmatter. The whole card
-is one link; hover lifts it and tints the border and title from the division
-hue.
+three-line-clamped summary sit below it. Every card is a plain 1px-rule
+container on every division — there is no top-border accent and no
+per-division wayfinding hue; identity comes from the photo and type alone.
+With no poster set, the media slot is a flat sunken field tinted 7% from Blue
+Dark rather than an empty or broken-looking box, so the card is designed to
+be complete before a photo exists and richer the moment one is dropped into
+frontmatter. The whole card is one link; hovering it draws its two vertical
+edges inward — see The Drawing-In Rule under Elevation & Depth.
 
 Division pages render projects in an auto-filling grid (`minmax(17rem, 1fr)`)
 below their Page Intro by default. Robotics is the one hand-curated exception:
@@ -407,23 +480,35 @@ than the generic weight sort.
 Every project page repeats the same photo the visitor clicked through from
 its card, larger, at the top of its own page — see Page Intro above.
 
+### About Me (signature)
+
+Sits between the hero and the division grid, home page only. Two columns above
+`46rem` — Kevin's own bio on the left, a contained photo (`MediaSlot`) on the
+right — stacking to text-above-photo below it. The photo uses the same flat
+Blue-Dark-washed placeholder as every other media slot until
+`src/assets/about.*` exists. This is the one place on the home page carrying
+first-person, self-descriptive prose; the rest of the page still lets the
+divisions and projects do the introducing.
+
 ### Division Grid (signature)
 
 Four rounded-rectangle tiles in a 2x2 grid (one column below `36rem`), each a
 plain link straight into its division. Every tile names the topic, not a
-project — the division label and its one-line blurb — so the section stays
-accurate as projects are added, removed, or reordered within a division. Every
-tile shares one navy ground and one orange top rule; this is the one surface
-in the system that deliberately drops the tertiary division hues, because it
-is the visitor's first read of the whole site and the two-accent identity
-should be unmistakable before they have picked a division. There is no active
-state and no script: every tile is a real link doing its whole job
-unconditionally.
+project — the division label and its one-line blurb, centred rather than
+left-anchored so they read as a caption for the whole tile — so the section
+stays accurate as projects are added, removed, or reordered within a division.
+There is no separate call-to-action line; the label and blurb are the whole
+tile's content. Every tile shares one dark-blue ground with no top-border
+accent; this is the one surface in the system that deliberately drops the
+tertiary division hues, because it is the visitor's first read of the whole
+site and the structural accent should be unmistakable before they have picked
+a division. There is no active state and no script: every tile is a real link
+doing its whole job unconditionally.
 
 Behind the text sits that division's photo (`MediaSlot`, sourced from
-`DIVISION_IMAGE` — see the Page Intro entry below), with a bottom-heavy navy
-scrim over it for legibility whether the photo exists yet or not. The same
-photo reappears, larger, at the top of that division's own page.
+`DIVISION_IMAGE` — see the Page Intro entry below), with a bottom-heavy
+dark-blue scrim over it for legibility whether the photo exists yet or not.
+The same photo reappears, larger, at the top of that division's own page.
 
 ### Marginalia (signature)
 
@@ -444,7 +529,7 @@ a `z-index: -1` figure is not painted behind its own section background).
 
 ### Annotation (signature)
 
-A sunken-paper block with a 2px orange top border, carrying the contribution scope
+A sunken-paper block with a 2px light-blue top border, carrying the contribution scope
 on any project Kevin did not build alone. It is the notebook's margin note made
 structural, and the schema requires it wherever a project is collaborative.
 
@@ -467,7 +552,8 @@ structural, and the schema requires it wherever a project is collaborative.
 
 ### Don't:
 
-- **Don't** set type in Orange (`#d9762f`); it cannot hold contrast. Use Orange Deep.
+- **Don't** set type in Blue Light (`#00a8e8`) on the page ground; it cannot
+  hold contrast there. Use Blue Dark, or set it only on a dark surface.
 - **Don't** fill a region with a division hue.
 - **Don't** add a dark mode. Light is a decision about the reading scene, not an
   oversight.
@@ -479,6 +565,10 @@ structural, and the schema requires it wherever a project is collaborative.
   topics, not projects.
 - **Don't** animate anything from `opacity: 0`, or let scroll position decide
   whether content is legible.
+- **Don't** put a graph-paper ground, dot grid, blueprint ruling, or any other
+  repeating pattern behind a page, a section, or a media slot. This was tried
+  and removed; it is texture standing in for an idea. Separation comes from a
+  tonal band or a hairline.
 - **Don't** add stock engineering decoration — gears, circuit traces, blueprints.
   The figures earn their place by being his own problems.
 - **Don't** place a marginal figure over a column that carries text.
