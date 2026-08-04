@@ -4,7 +4,8 @@ import { render } from 'astro:content';
 import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import PageIntro from './PageIntro.astro';
-import { accentVars, CATEGORY_META, LINK_LABELS, url } from '../lib/site';
+import { CATEGORY_META, LINK_LABELS, url } from '../lib/site';
+import { DIVISION_VIDEO_ALT, type DivisionVideo } from '../lib/divisionVideos';
 
 /**
  * The full project page body, shared by every project's own URL and by the
@@ -14,9 +15,8 @@ import { accentVars, CATEGORY_META, LINK_LABELS, url } from '../lib/site';
  * credentials, demo/repo actions, contribution scope, the facts rail, the
  * gallery, and prev/next navigation all still work exactly as they did.
  *
- * `--cat` here is the division's single committed accent (orange or navy),
- * not the division's own tertiary hue — see PAGE_ACCENT and DESIGN.md's
- * "One Accent Per Division Page" rule.
+ * Every project's accent (credentials, rules, markers) is the fixed
+ * structural Blue Dark — there is no longer a per-division accent to set.
  */
 const FIGURE = {
   robotics: 'trajectory',
@@ -29,9 +29,16 @@ interface Props {
   project: CollectionEntry<'projects'>;
   prev: CollectionEntry<'projects'> | null;
   next: CollectionEntry<'projects'> | null;
+  /**
+   * The division's demo clip for the intro slot, passed only when this page IS
+   * a division page — currently just Research, which merges with AutoOMR. A
+   * project's own URL leaves this unset and keeps its poster still, since the
+   * clip belongs to the division, not to the project.
+   */
+  introVideo?: DivisionVideo['full'] | null;
 }
 
-const { project, prev, next } = Astro.props;
+const { project, prev, next, introVideo = null } = Astro.props;
 const { data } = project;
 const { Content } = await render(project);
 
@@ -50,10 +57,15 @@ const facts = [
 ].filter(Boolean) as { label: string; value: string; href?: string }[];
 ---
 
-<article style={accentVars(data.category)}>
+<article>
   <PageIntro
     image={data.poster ?? null}
-    alt={data.posterAlt ?? `${data.title} running`}
+    video={introVideo}
+    alt={
+      introVideo
+        ? DIVISION_VIDEO_ALT[data.category]
+        : data.posterAlt ?? `${data.title} running`
+    }
     title={data.title}
     overview={data.summary}
     eyebrow={{ label: meta.label, href: url(`/${data.category}`) }}
@@ -193,8 +205,8 @@ const facts = [
     font-weight: 500;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--cat-deep);
-    border-left: 1px solid var(--cat);
+    color: var(--accent-blue-dark);
+    border-left: 1px solid var(--accent-blue-dark);
     padding-left: var(--s-3);
   }
 
@@ -245,12 +257,10 @@ const facts = [
     box-shadow: var(--shadow-md);
   }
 
-  /* Hardcoded orange rather than var(--cat): the primary button's fill is
-     always navy (a site-wide token, not this page's committed accent), so on
-     a navy-accent page a --cat ring would repeat the same invisible-on-navy
-     problem this override exists to prevent. */
+  /* The primary button's fill is Blue Dark, the same colour the site-wide
+     focus ring uses, so it needs the other accent here to stay visible. */
   .action--primary:focus-visible {
-    outline-color: var(--accent-orange);
+    outline-color: var(--accent-blue-light);
   }
 
   /* ---- Body -------------------------------------------------------------- */
@@ -308,7 +318,7 @@ const facts = [
   }
 
   .prose :global(li::marker) {
-    color: var(--cat);
+    color: var(--accent-blue-dark);
   }
 
   .prose :global(strong) {
@@ -329,7 +339,7 @@ const facts = [
     margin-bottom: var(--s-7);
     background: var(--ground-sunken);
     border-radius: var(--radius-md);
-    border-top: 2px solid var(--cat);
+    border-top: 2px solid var(--accent-blue-light);
   }
 
   .scope__label {

@@ -2,16 +2,24 @@
 import { CATEGORIES } from '../content.config';
 import { CATEGORY_META, url } from '../lib/site';
 import { DIVISION_IMAGE } from '../lib/divisionImages';
-import Icon from './Icon.astro';
+import { DIVISION_VIDEO, DIVISION_VIDEO_ALT } from '../lib/divisionVideos';
 import MediaSlot from './MediaSlot.astro';
 
 /**
  * Four static tiles, one per division, in a 2x2 grid. Each names the topic —
  * not a specific project — so the tile stays accurate as projects are added
- * or reordered within a division. Plain links throughout: there is no active
- * state to switch, so no JavaScript is needed for this section to work. The
- * same division photo (or its placeholder) reappears bigger at the top of
- * that division's own page, via `PageIntro`.
+ * or reordered within a division. Plain links throughout: no JavaScript is
+ * needed for this section to work. The same division clip reappears at the top
+ * of that division's own page via `PageIntro`, in its uncropped framing —
+ * these tiles take the square cut, which stays centre-safe whatever shape the
+ * tile is at a given width.
+ *
+ * The grid is still by default: each tile rests on frame 0 of its clip and
+ * only plays while pointed at or focused. Four clips looping at once would be
+ * four things competing for the same glance, and none of them would win.
+ * Playing the one under the cursor makes the motion an answer to where the
+ * visitor is already looking, which is also what makes it read as a preview of
+ * the page behind the tile rather than decoration on top of it.
  */
 const divisions = CATEGORIES.map((category) => ({
   category,
@@ -19,31 +27,36 @@ const divisions = CATEGORIES.map((category) => ({
 }));
 ---
 
-<section class="reel" aria-labelledby="reel-heading">
-  <div class="wrap">
-    <h2 id="reel-heading">Project Overview</h2>
+{/* This section used to sit inside a `display: contents` shell whose only job
+    was to keep it out of Base.astro's `main > section` selector, so it took no
+    arrival animation at all. It now takes the same authored rise as About Me,
+    so it is a direct child of `<main>` again and the shell is gone. The heading
+    and the 2x2 grid rise as one block — `data-rise-target` is on the wrapper
+    that holds both, not on the tiles, so this is one gesture rather than four
+    staggered cards. */}
+<section class="reel" aria-labelledby="reel-heading" data-rise>
+  <div class="wrap" data-rise-target>
+    <h2 id="reel-heading">Explore My Work</h2>
 
     <div class="grid">
       {
         divisions.map(({ category, meta }) => (
           <a class="tile" href={url(`/${category}`)}>
-            <div class="tile__media">
-              <MediaSlot
-                image={DIVISION_IMAGE[category]}
-                alt={`${meta.label} team photo`}
-                widths={[480, 720, 960]}
-                sizes="(min-width: 36rem) 50vw, 100vw"
-                iconSize={32}
-              />
-            </div>
-            <div class="tile__scrim" />
-            <div class="tile__body">
-              <h3 class="tile__title">{meta.label}</h3>
-              <p class="tile__blurb">{meta.blurb}</p>
-              <span class="tile__cta">
-                Explore {meta.label.toLowerCase()}
-                <Icon name="arrow-right" size={18} />
-              </span>
+            <div class="tile__frame">
+              <div class="tile__media">
+                <MediaSlot
+                  video={DIVISION_VIDEO[category].card}
+                  playOn="hover"
+                  image={DIVISION_IMAGE[category]}
+                  alt={DIVISION_VIDEO_ALT[category]}
+                  widths={[480, 720, 960]}
+                  sizes="(min-width: 36rem) 50vw, 100vw"
+                  iconSize={32}
+                />
+              </div>
+              <div class="tile__body">
+                <h3 class="tile__title">{meta.label}</h3>
+              </div>
             </div>
           </a>
         ))
@@ -73,27 +86,38 @@ const divisions = CATEGORIES.map((category) => ({
 
   /* ---- Tile ---------------------------------------------------------- */
 
-  /* One material for all four tiles — navy ground, orange rule — so the grid
-     reads as the site's two accents rather than four unrelated hues. Division
-     identity comes from the label and blurb, not from colour coding. The
-     photo (or its placeholder) sits behind everything; the scrim on top of it
-     is what keeps the navy identity and the text legible either way. */
+  /* One material for all four tiles — dark-blue ground — so the grid reads
+     as the site's structural accent rather than four unrelated hues.
+     Division identity comes from the label and blurb, not from colour
+     coding. The clip (or its poster, or the placeholder) sits behind
+     everything, and the scrim rides only the strip of it the title needs. */
+  /* The link holds the grid cell; `.tile__frame` is everything visible. The
+     split is what lets the tile's vertical edges draw inward on hover without
+     the 2x2 grid relaying out around it — see ProjectCard, which uses the same
+     structure so the two surfaces move identically. */
   .tile {
     position: relative;
-    isolation: isolate;
-    display: flex;
-    align-items: flex-end;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    padding: clamp(var(--s-5), 3vw, var(--s-7));
+    display: block;
     min-height: 14rem;
     color: var(--ink-inverse);
     text-decoration: none;
+  }
+
+  .tile__frame {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    isolation: isolate;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
     box-shadow: var(--shadow-lg);
-    border-top: 3px solid var(--accent-orange);
     background: var(--ground-inverse);
+    /* Resting values are the exit timing; the hover state below lengthens it. */
     transition:
-      transform var(--dur-fast) var(--ease-out),
+      left var(--dur-fast) var(--ease-out),
+      right var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
 
@@ -103,18 +127,6 @@ const divisions = CATEGORIES.map((category) => ({
     z-index: -2;
   }
 
-  .tile__scrim {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--ground-inverse) 94%, black) 0%,
-      color-mix(in srgb, var(--ground-inverse) 60%, transparent) 55%,
-      color-mix(in srgb, var(--ground-inverse) 22%, transparent) 100%
-    );
-  }
-
   @media (min-width: 36rem) {
     .tile {
       aspect-ratio: 4 / 3;
@@ -122,57 +134,69 @@ const divisions = CATEGORIES.map((category) => ({
     }
   }
 
-  .tile:hover,
-  .tile:focus-visible {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--accent-orange) 45%, transparent);
+  .tile:hover .tile__frame,
+  .tile:focus-visible .tile__frame {
+    left: var(--card-hover-inset);
+    right: var(--card-hover-inset);
+    box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--accent-blue-light) 45%, transparent);
+    transition-duration: var(--dur-mid);
   }
 
-  /* Navy is both the tile's ground and the site's focus-ring colour, so on
-     this surface the ring needs the other accent to stay visible. */
+  /* Blue Dark is both the tile's ground and the site's focus-ring colour, so
+     on this surface the ring needs the other accent to stay visible — and it
+     rides the frame, so it tracks the edges as they draw in. */
   .tile:focus-visible {
-    outline-color: var(--accent-orange);
+    outline: none;
   }
 
+  .tile:focus-visible .tile__frame {
+    outline: 2px solid var(--accent-blue-light);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile:hover .tile__frame,
+    .tile:focus-visible .tile__frame {
+      left: 0;
+      right: 0;
+    }
+  }
+
+  /* The scrim is this band, not a wash over the whole tile. It exists to carry
+     the title, so it is only as tall as the title needs and the rest of the
+     clip is left unveiled — which matters more now that the clip plays: a full
+     tile gradient was dimming the very thing the tile is there to show.
+
+     `padding-block` is deliberately symmetric. It is what centres the title
+     within the band, so the band's height is derived from the text rather than
+     set to a number that stops being right the moment the label wraps to two
+     lines.
+
+     Centred rather than left-anchored, so the topic name reads as a caption
+     for the whole tile rather than a corner label. */
   .tile__body {
-    max-width: 34ch;
+    position: absolute;
+    inset: auto 0 0 0;
+    padding-block: var(--s-5);
+    padding-inline: clamp(var(--s-5), 3vw, var(--s-7));
+    text-align: center;
+    /* Near-solid across the text, then all of the fade spent in the clear
+       margin above it — so the title sits on even ground and the gradient
+       still resolves into the picture instead of ending on an edge. */
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--ground-inverse) 92%, black) 0%,
+      color-mix(in srgb, var(--ground-inverse) 86%, transparent) 45%,
+      color-mix(in srgb, var(--ground-inverse) 60%, transparent) 72%,
+      transparent 100%
+    );
   }
 
   .tile__title {
-    font-size: var(--text-2xl);
+    font-size: var(--text-lg);
     letter-spacing: var(--track-display);
-    margin-bottom: var(--s-3);
     color: var(--ink-inverse);
-  }
-
-  .tile__blurb {
-    color: rgba(247, 247, 246, 0.84);
-    font-size: var(--text-sm);
-    line-height: 1.55;
-    margin-bottom: var(--s-5);
-  }
-
-  .tile__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--s-2);
-    font-weight: 560;
-    font-size: var(--text-sm);
-    color: var(--ink-inverse);
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .tile:hover .tile__cta,
-  .tile:focus-visible .tile__cta {
-    color: var(--accent-orange);
-  }
-
-  .tile__cta svg {
-    transition: transform var(--dur-mid) var(--ease-out);
-  }
-
-  .tile:hover .tile__cta svg,
-  .tile:focus-visible .tile__cta svg {
-    transform: translateX(4px);
+    max-width: 34ch;
+    margin-inline: auto;
   }
 </style>

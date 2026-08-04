@@ -11,6 +11,13 @@ import Marginalia from './Marginalia.astro';
  */
 interface Props {
   image: ImageMetadata | null;
+  /**
+   * A clip to run in the slot instead of the still. Its real pixel dimensions
+   * come with it so the frame can take the clip's own aspect ratio — the point
+   * of this slot is the footage uncropped, and a fixed 16/10 frame would crop
+   * anything that is not already 16/10.
+   */
+  video?: { src: string; poster: string; width: number; height: number } | null;
   alt: string;
   title: string;
   overview: string;
@@ -18,14 +25,31 @@ interface Props {
   figure?: 'rays' | 'linkage' | 'trajectory' | 'contours' | 'spline' | 'cube';
 }
 
-const { image, alt, title, overview, eyebrow, figure } = Astro.props;
+const { image, video = null, alt, title, overview, eyebrow, figure } = Astro.props;
+
+/**
+ * A clip taller than it is wide would otherwise push the title off the first
+ * screen, so the frame is capped by height and gives up width to stay under
+ * the cap — `--media-ratio` is what lets the CSS trade one for the other. A
+ * 16/9 clip is limited by the 46rem column and never reaches the cap; a square
+ * one narrows to about 30rem and sits centred.
+ */
+const mediaStyle = video ? `--media-ratio: ${video.width / video.height}` : undefined;
 ---
 
 <div class="wrap intro">
   {figure && <Marginalia figure={figure} side="right" top="4%" size={260} />}
 
-  <div class="intro__media">
-    <MediaSlot image={image} alt={alt} widths={[640, 960, 1440]} sizes="(min-width: 74rem) 46rem, 90vw" iconSize={36} />
+  <div class:list={['intro__media', video && 'intro__media--video']} style={mediaStyle}>
+    <MediaSlot
+      video={video}
+      videoControls={true}
+      image={image}
+      alt={alt}
+      widths={[640, 960, 1440]}
+      sizes="(min-width: 74rem) 46rem, 90vw"
+      iconSize={36}
+    />
   </div>
 
   {
@@ -62,6 +86,14 @@ const { image, alt, title, overview, eyebrow, figure } = Astro.props;
     margin-bottom: var(--s-6);
   }
 
+  /* The clip's own aspect, so nothing is cropped; then a height ceiling that
+     the width yields to, so a tall clip narrows rather than shoving the title
+     off the screen. Both branches keep the 46rem column as the outer bound. */
+  .intro__media--video {
+    aspect-ratio: var(--media-ratio);
+    max-width: min(46rem, calc(30rem * var(--media-ratio)));
+  }
+
   .intro__eyebrow {
     display: inline-block;
     font-family: var(--font-mono);
@@ -69,7 +101,7 @@ const { image, alt, title, overview, eyebrow, figure } = Astro.props;
     font-weight: 500;
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-    color: var(--cat);
+    color: var(--accent-blue-dark);
     text-decoration: none;
     margin-bottom: var(--s-3);
     border-bottom: 1px solid transparent;

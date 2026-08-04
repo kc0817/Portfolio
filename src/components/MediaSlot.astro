@@ -4,47 +4,262 @@ import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 
 /**
- * One image-or-placeholder renderer, used everywhere a photo may not exist
- * yet: project cards, the gallery slots, the home division tiles, and the
- * big intro image on topic and project pages. The placeholder is graph-paper
- * stock — the same material the page itself sits on — tinted from whatever
- * `--cat` is in scope, so an empty slot still carries identity instead of
- * reading as broken or unfinished. Swap in a real image and nothing else
- * about the surrounding layout has to change.
+ * One video-or-image-or-placeholder renderer, used everywhere a picture may
+ * not exist yet: project cards, the gallery slots, the home division tiles,
+ * and the big intro slot on topic and project pages.
+ *
+ * The three states are ranked, not alternatives: a `video` wins if there is
+ * one, an `image` fills the same box identically if there is not, and the
+ * placeholder catches the rest. Because all three occupy the slot the same way
+ * — full bleed, `object-fit: cover` — a slot can gain footage later and no
+ * surrounding layout has to change. That is the whole reason this component
+ * exists rather than each call site branching for itself.
+ *
+ * The placeholder is a flat sunken field tinted from the structural accent —
+ * the same tonal move the system already uses to separate a section, at the
+ * scale of a picture. It used to be ruled graph paper; the ruling was removed
+ * everywhere, and a plain tonal field is the more honest answer anyway. An
+ * empty slot should read as a deliberately quiet surface, not as texture
+ * pretending something is there.
  */
 interface Props {
+  /**
+   * A silent clip to play in the slot. `poster` is required, not optional: it
+   * is the slot's resting state, and it is encoded from frame 0 of the clip
+   * itself so that starting playback continues the picture rather than cutting
+   * to a different moment.
+   */
+  video?: { src: string; poster: string } | null;
+  /**
+   * What starts the clip.
+   *
+   * `visible` — plays whenever it is on screen. For a slot that is the subject
+   * of its page, where the clip is the reason the visitor is there.
+   *
+   * `hover` — rests on its first frame and plays only while pointed at or
+   * keyboard-focused, rewinding on the way out. For grids of clips, where
+   * playing them all at once is noise: motion becomes the answer to the
+   * visitor's attention rather than a demand for it.
+   */
+  playOn?: 'visible' | 'hover';
   image?: ImageMetadata | null;
   alt?: string;
   widths?: number[];
   sizes?: string;
   iconSize?: number;
+  /**
+   * Show the native play/pause/scrub bar. Off for cards and tiles, where the
+   * whole surface is a link and a control strip inside it would only compete
+   * with the click; on for the big intro slot, which is a place to actually
+   * watch the clip rather than a thumbnail of it.
+   */
+  videoControls?: boolean;
 }
 
 const {
+  video = null,
   image = null,
   alt = '',
   widths = [400, 600, 900],
   sizes = '100vw',
   iconSize = 28,
+  videoControls = false,
+  playOn = 'visible',
 } = Astro.props;
 ---
 
 {
-  image ? (
+  video ? (
+    /* `muted` and `playsinline` are what make autoplay permissible at all —
+       every current browser blocks an unmuted autoplay, and without
+       `playsinline` iOS Safari hijacks the clip into fullscreen the moment it
+       starts. `preload="metadata"` keeps four tiles on the home page from
+       racing to buffer four full clips before anything is even scrolled to;
+       the poster carries the slot until playback begins.
+
+       Note the absence of an `autoplay` attribute: the script below starts
+       playback instead. The attribute would begin decoding at parse time,
+       which means clips playing to nobody below the fold, and — worse — a beat
+       of motion for the one visitor who explicitly asked for none, since a
+       media query cannot stop a video and the script only gets to intervene
+       afterwards. Driving it from script means the decision is made once,
+       correctly, before the first frame. With JavaScript unavailable the slot
+       rests on its poster, which is frame 0 of the clip. */
+    <video
+      class="media-slot__video"
+      src={video.src}
+      poster={video.poster}
+      aria-label={alt || undefined}
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      controls={videoControls || undefined}
+      disablepictureinpicture
+      data-slot-video={playOn}
+    />
+  ) : image ? (
     <Image src={image} alt={alt} widths={widths} sizes={sizes} class="media-slot__img" />
   ) : (
+
     <div class="media-slot__placeholder" aria-hidden="true">
       <Icon name="image" size={iconSize} />
     </div>
+
   )
 }
 
+<script>
+  /**
+   * Two ways a slot video earns the right to play, chosen per slot by
+   * `playOn`. `visible` clips play whenever they are on screen. `hover` clips
+   * play only while pointed at or focused, and rewind on the way out, so a
+   * grid of them is still by default and only the one under the cursor moves.
+   *
+   * Both go through the same gate, because the rest of the rules are shared:
+   * reduced motion always wins, a clip the visitor paused themselves stays
+   * paused, and nothing plays while it is off screen — a hovered card that is
+   * scrolled away from should not keep decoding.
+   */
+  type Mode = 'visible' | 'hover';
+
+  const videos = [
+    ...document.querySelectorAll<HTMLVideoElement>('video[data-slot-video]'),
+  ];
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const userPaused = new WeakSet<HTMLVideoElement>();
+  const pointedAt = new WeakSet<HTMLVideoElement>();
+
+  /**
+   * On screen or not, per clip — and crucially `undefined` until the observer
+   * has actually said. The two modes read that unknown state in opposite
+   * directions, which is deliberate:
+   *
+   * A `visible` clip must be *known* on screen to play, because the whole
+   * point of dropping the `autoplay` attribute was that nothing starts until
+   * something has confirmed it is worth starting.
+   *
+   * A `hover` clip only has to be not *known* off screen, because the pointer
+   * has already answered the question the observer would have: you cannot
+   * point at a tile you cannot see. Requiring a confirmed report there would
+   * make hover silently dead for the stretch before the first callback lands,
+   * and dead entirely in any environment where the observer is starved. The
+   * observer still earns its keep in the one case the pointer misses —
+   * scrolling a hovered tile away, which fires no `pointerleave`.
+   */
+  const visible = new WeakMap<HTMLVideoElement, boolean>();
+
+  const modeOf = (video: HTMLVideoElement): Mode =>
+    video.dataset.slotVideo === 'hover' ? 'hover' : 'visible';
+
+  function wantsToPlay(video: HTMLVideoElement) {
+    if (still.matches || userPaused.has(video)) return false;
+    return modeOf(video) === 'hover'
+      ? pointedAt.has(video) && visible.get(video) !== false
+      : visible.get(video) === true;
+  }
+
+  function settle(video: HTMLVideoElement) {
+    if (wantsToPlay(video)) {
+      // Playback can still be refused (data saver, low power mode). The poster
+      // stays up in that case, which is a fine resting state, so swallow it.
+      video.play().catch(() => {});
+    } else if (!video.paused) {
+      video.pause();
+      // Rewind, so the next hover — or the next scroll back to this tile —
+      // starts the demo at its beginning rather than dropping the visitor into
+      // the middle of a loop. The poster is frame 0, so the clip settles back
+      // onto exactly the picture it started from. Skipped when the visitor
+      // paused it themselves: that position is theirs to keep.
+      if (!userPaused.has(video)) video.currentTime = 0;
+    }
+  }
+
+  videos.forEach((video) => {
+    video.addEventListener('pause', () => {
+      // Only a real interaction counts — every pause this script issues is one
+      // `wantsToPlay` had already ruled out.
+      if (!video.ended && wantsToPlay(video)) userPaused.add(video);
+    });
+    video.addEventListener('play', () => userPaused.delete(video));
+  });
+
+  // 20% rather than any sliver: a clip one pixel into view is not yet being
+  // watched, and starting it there wastes the first second of the loop.
+  const seen = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(({ target, isIntersecting }) => {
+        const video = target as HTMLVideoElement;
+        visible.set(video, isIntersecting);
+        settle(video);
+      });
+    },
+    { threshold: 0.2 },
+  );
+
+  videos.forEach((video) => seen.observe(video));
+
+  /**
+   * Hover is bound to the card, not to the video: the video sits behind a
+   * scrim and a title, so pointing at the words would otherwise read as
+   * pointing away from the clip. `focusin`/`focusout` give the keyboard the
+   * same behaviour the mouse gets, since the card is a link and tabbing to it
+   * is the same act of attention as pointing at it.
+   *
+   * `pointerenter` covers mouse, pen, and — on touch — the tap that precedes
+   * following the link, which is the most a tap can honestly mean here.
+   */
+  videos
+    .filter((video) => modeOf(video) === 'hover')
+    .forEach((video) => {
+      const card = video.closest<HTMLElement>('a, [data-video-hover-root]') ?? video;
+
+      const enter = () => {
+        pointedAt.add(video);
+        settle(video);
+      };
+      const leave = () => {
+        pointedAt.delete(video);
+        settle(video);
+      };
+
+      card.addEventListener('pointerenter', enter);
+      card.addEventListener('pointerleave', leave);
+      card.addEventListener('focusin', enter);
+      card.addEventListener('focusout', leave);
+    });
+
+  /**
+   * Reduced motion parks every clip on its poster. Controls appear only where
+   * the slot already wanted them — on a card the whole surface is a link, and
+   * a control strip inside it would be a second target competing with the
+   * click. Those slots simply rest on frame 0, and the clip is still one click
+   * away on the division page, which does offer controls.
+   */
+  function applyMotionPreference() {
+    videos.forEach((video) => {
+      if (still.matches && modeOf(video) === 'visible') video.controls = true;
+      settle(video);
+    });
+  }
+
+  applyMotionPreference();
+  still.addEventListener('change', applyMotionPreference);
+</script>
+
 <style>
-  .media-slot__img {
+  .media-slot__img,
+  .media-slot__video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+  }
+
+  /* Letterbox bars, where a clip's aspect does not match its slot exactly, read
+     as part of the frame rather than as a gap in it. */
+  .media-slot__video {
+    background: var(--ground-inverse);
   }
 
   .media-slot__placeholder {
@@ -53,9 +268,6 @@ const {
     display: grid;
     place-items: center;
     color: var(--ink-tertiary);
-    background:
-      repeating-linear-gradient(to right, var(--grid-line) 0 1px, transparent 1px var(--grid-step)),
-      repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px var(--grid-step)),
-      color-mix(in srgb, var(--cat, transparent) 7%, var(--ground-sunken));
+    background: color-mix(in srgb, var(--accent-blue-dark) 7%, var(--ground-sunken));
   }
 </style>

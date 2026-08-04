@@ -4,11 +4,13 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import PageIntro from '../components/PageIntro.astro';
 import ProjectGrid from '../components/ProjectGrid.astro';
+import MathProjectGrid from '../components/MathProjectGrid.astro';
 import ProjectDetail from '../components/ProjectDetail.astro';
 import RoboticsShowcase from '../components/RoboticsShowcase.astro';
 import { CATEGORIES } from '../content.config';
-import { accentVars, CATEGORY_META } from '../lib/site';
+import { CATEGORY_META } from '../lib/site';
 import { DIVISION_IMAGE } from '../lib/divisionImages';
+import { DIVISION_VIDEO, DIVISION_VIDEO_ALT } from '../lib/divisionVideos';
 
 /** Each division gets the figure that belongs to its own subject matter. */
 const FIGURE = {
@@ -55,12 +57,18 @@ const omrProject = category === 'research' ? projects.find((p) => p.id === 'omr-
 >
   {
     omrProject ? (
-      <ProjectDetail project={omrProject} prev={null} next={null} />
+      <ProjectDetail
+        project={omrProject}
+        prev={null}
+        next={null}
+        introVideo={DIVISION_VIDEO[category].full}
+      />
     ) : (
-      <div style={accentVars(category)}>
+      <>
         <PageIntro
           image={DIVISION_IMAGE[category]}
-          alt={`${meta.label} team photo`}
+          video={DIVISION_VIDEO[category].full}
+          alt={DIVISION_VIDEO_ALT[category]}
           title={meta.label}
           overview={meta.blurb}
           figure={FIGURE[category]}
@@ -69,6 +77,8 @@ const omrProject = category === 'research' ? projects.find((p) => p.id === 'omr-
         <div class="wrap body">
           {category === 'robotics' ? (
             <RoboticsShowcase projects={projects} />
+          ) : category === 'math' && projects.length > 0 ? (
+            <MathProjectGrid projects={projects} />
           ) : projects.length > 0 ? (
             <ProjectGrid projects={projects} />
           ) : (
@@ -78,7 +88,7 @@ const omrProject = category === 'research' ? projects.find((p) => p.id === 'omr-
             </p>
           )}
         </div>
-      </div>
+      </>
     )
   }
 </Base>
