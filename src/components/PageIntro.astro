@@ -39,17 +39,23 @@ interface Props {
   eyebrow?: { label: string; href: string };
   figure?: 'rays' | 'linkage' | 'trajectory' | 'contours' | 'spline' | 'cube';
   /**
-   * Where "Return to Portfolio" points — the home page's anchor for this
-   * project's division (`/#robotics` and so on), which is where the project
-   * is actually reachable from rather than a generic home link.
-   */
-  backHref: string;
-  /**
-   * Built with / When / Team — the last thing in the opening block, directly
-   * under the title. The Overview paragraph used to sit between the two; it is
-   * now its own section below this component, so the facts close the intro.
+   * Built with / When / Team, directly under the title. The Overview paragraph
+   * used to sit between the two; it is now its own section below this component,
+   * so the facts and whatever the default slot carries close the intro.
    */
   facts?: { label: string; value: string; href?: string }[];
+  /**
+   * The prev/next project, one either side of the main image. Each is a
+   * project's own title unless there is no neighbour on that side, in which case
+   * the caller passes the division's anchor and a "Portfolio" label instead — so
+   * the first project's left arrow and the last project's right arrow lead back
+   * out rather than dead-ending. These are also the only way back to the
+   * portfolio from the top of the page: the "Return to Portfolio" link that used
+   * to sit above the picture is gone, and the eyebrow above the title still
+   * links to the division.
+   */
+  prevNav: { label: string; href: string };
+  nextNav: { label: string; href: string };
 }
 
 const {
@@ -60,8 +66,9 @@ const {
   title,
   eyebrow,
   figure,
-  backHref,
   facts = [],
+  prevNav,
+  nextNav,
 } = Astro.props;
 
 /**
@@ -105,32 +112,44 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
 <div class="wrap intro">
   {figure && <Marginalia figure={figure} side="right" top="4%" size={260} />}
 
-  <a class="intro__back" href={backHref}>
+  {/* Siblings of the figure rather than children of it, because they are
+      anchored to the page's own edges and not to the picture's. The pictures are
+      all the same height but deliberately different widths, so an arrow hung off
+      the frame lands somewhere new on every project; hung off the wrap, both sit
+      in exactly the same place site-wide. */}
+  <a class="intro__nav intro__nav--prev" href={prevNav.href}>
     <Icon name="arrow-left" size={16} />
-    Return to Portfolio
+    <span>{prevNav.label}</span>
+  </a>
+
+  <a class="intro__nav intro__nav--next" href={nextNav.href}>
+    <span>{nextNav.label}</span>
+    <Icon name="arrow-right" size={16} />
   </a>
 
   <figure class:list={['intro__figure', ratio && 'intro__figure--fit']} style={mediaStyle}>
     <div class="intro__media">
-      {
-        still ? (
-          <img
-            class:list={['intro__still', cropStyle && 'intro__still--cropped']}
-            src={still.poster}
-            width={still.width}
-            height={still.height}
-            alt={alt}
-          />
-        ) : (
-          <MediaSlot
-            image={image}
-            alt={alt}
-            widths={[640, 960, 1440]}
-            sizes="(min-width: 74rem) 46rem, 90vw"
-            iconSize={36}
-          />
-        )
-      }
+      <div class="intro__media-inner">
+        {
+          still ? (
+            <img
+              class:list={['intro__still', cropStyle && 'intro__still--cropped']}
+              src={still.poster}
+              width={still.width}
+              height={still.height}
+              alt={alt}
+            />
+          ) : (
+            <MediaSlot
+              image={image}
+              alt={alt}
+              widths={[640, 960, 1440]}
+              sizes="(min-width: 74rem) 46rem, 90vw"
+              iconSize={36}
+            />
+          )
+        }
+      </div>
     </div>
 
     {
@@ -152,24 +171,41 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
 
   <h1 class="intro__title">{title}</h1>
 
+  {/* One band closing the intro: the actions on the left, the facts to their
+      right. The slot comes first in source as well as in the layout, so the
+      reading order and the visual order agree.
+
+      Actions are a slot rather than a prop so this component stays a general
+      opening: it owns where the row sits and what it does to the spacing around
+      it, and the caller owns what the link is. */}
   {
-    facts.length > 0 && (
-      <dl class="intro__facts">
-        {facts.map((fact) => (
-          <div class="intro__facts-row">
-            <dt class="label">{fact.label}</dt>
-            <dd>
-              {fact.href ? (
-                <a href={fact.href} rel="noopener">
-                  {fact.value}
-                </a>
-              ) : (
-                fact.value
-              )}
-            </dd>
+    (facts.length > 0 || Astro.slots.has('default')) && (
+      <div class="intro__meta">
+        {Astro.slots.has('default') && (
+          <div class="intro__actions">
+            <slot />
           </div>
-        ))}
-      </dl>
+        )}
+
+        {facts.length > 0 && (
+          <dl class="intro__facts">
+            {facts.map((fact) => (
+              <div class="intro__facts-row">
+                <dt class="label">{fact.label}</dt>
+                <dd>
+                  {fact.href ? (
+                    <a href={fact.href} rel="noopener">
+                      {fact.value}
+                    </a>
+                  ) : (
+                    fact.value
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
     )
   }
 </div>
@@ -180,58 +216,20 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
     isolation: isolate;
     overflow-x: clip;
     padding-top: var(--section-y);
-  }
 
-  /* Below 78rem there is not reliably enough room beside the centred 46rem
-     figure for the link's own text, so it is a plain line above the image.
-     From 78rem up it moves into the side column instead, anchored to the
-     picture rather than to the page edge — see the media query below for why
-     that breakpoint is 78rem and not the 74rem it used to be. */
-  .intro__back {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--s-2);
-    margin-bottom: var(--s-5);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-    color: var(--ink-tertiary);
-    text-decoration: none;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
+    /* Every project's picture is exactly this tall, which is the whole reason
+       the number is named: the figure's width is derived from it below, and the
+       arrows' vertical centre is derived from it again further down. Change it
+       here and the three stay in agreement.
 
-  .intro__back:hover {
-    color: var(--ink);
-  }
-
-  /* Anchored to the picture, not to the page edge: `right` holds the link a
-     constant `--s-5` clear of the figure's left edge, so as the viewport grows
-     the link stays visually attached to the image instead of drifting off toward
-     the corner. `50%` is the wrap's centre and the figure is centred on it, so
-     half the figure's width plus the gap is the whole offset. Top-aligned with
-     the figure via `--section-y`, the same offset that gives the figure its own
-     top spacing.
-
-     The breakpoint is measured, and it moved from 74rem to 78rem when the
-     anchor changed: "Return to Portfolio" sets about 11rem wide, the figure
-     takes 46rem centred, and the gutters are 3rem each, so the link's left edge
-     lands at `wrap/2 - 35.5rem`. That is only positive from a 71rem wrap — a
-     77rem viewport — and 78rem is both the next round number and `--page-max`.
-     Below it the link is the plain line above the image. Re-measure this if the
-     link's wording or the figure's 46rem cap ever changes.
-
-     One known slack: a portrait still narrows the figure below 46rem via
-     `--fit`, and nothing here can read that rendered width, so the gap opens up
-     wider than `--s-5` on those pages. It is a larger gap, never a collision. */
-  @media (min-width: 78rem) {
-    .intro__back {
-      position: absolute;
-      top: var(--section-y);
-      right: calc(50% + (46rem / 2) + var(--s-5));
-      margin-bottom: 0;
-    }
+       28rem is not arbitrary — it is the tallest value that keeps every picture
+       inside the 46rem column. The widest ratio on the site is the ballistic
+       solver's 1176/720, and 28rem x 1.633 = 45.73rem, just inside. At the 30rem
+       this used to be, that one picture wanted 49rem, hit the 46rem cap, and
+       came out 28.17rem tall while the other five stood at 30rem — which is
+       exactly the mismatch this fixes. Anything wider than a 1.64 ratio would
+       hit the cap again and crop instead; see `.intro__still`. */
+    --hero-h: 28rem;
   }
 
   /* The figure carries the width so the caption can never be wider than the
@@ -242,24 +240,135 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
     margin: 0 auto var(--s-6);
   }
 
-  /* The picture's own aspect, so nothing is cropped; then a height ceiling that
-     the width yields to, so a tall picture narrows rather than shoving the
-     title off the screen. Both branches keep the 46rem column as the outer
-     bound. */
+  /* Width derived from the shared height and the picture's own aspect, so every
+     project's picture is the same height and takes whatever width that costs —
+     which is why the widths differ from page to page and the heights do not.
+     Nothing is cropped to achieve it: the frame keeps the picture's exact
+     aspect, so equal heights fall out of the arithmetic rather than out of a
+     crop. The 46rem cap stays as the outer bound and is slack for every current
+     picture; if it ever binds, the height shortens on that page alone.
+
+     `max-width` rather than `width` so the figure still shrinks below its ideal
+     size on a narrow viewport instead of overflowing. Heights only match where
+     there is room for the full width — which is everywhere the arrows are
+     visible, since those need a wider viewport still. */
   .intro__figure--fit {
-    max-width: min(46rem, calc(30rem * var(--media-ratio)));
+    max-width: min(46rem, calc(var(--hero-h) * var(--media-ratio)));
   }
 
+  /* Holds the rounded, shadowed picture box. The rounding and clipping live on
+     `.intro__media-inner` so this stays a plain positioning context. */
   .intro__media {
     position: relative;
     aspect-ratio: 16 / 10;
+  }
+
+  .intro__figure--fit .intro__media {
+    aspect-ratio: var(--media-ratio);
+  }
+
+  /* `position: relative` is load-bearing, not decoration. `.intro__still--cropped`
+     below is absolutely positioned and deliberately overflows its frame so the
+     black bars baked into the encode fall outside it — and an absolutely
+     positioned box is only clipped by an ancestor's `overflow` if that ancestor
+     is in its containing-block chain. Without this, the cropped still's
+     containing block resolves up to `.intro__media`, this element's
+     `overflow: hidden` is skipped entirely, and the bars come back. */
+  .intro__media-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
   }
 
-  .intro__figure--fit .intro__media {
-    aspect-ratio: var(--media-ratio);
+  /* ---- Prev/next arrows ---------------------------------------------------- */
+
+  /* Hidden below 78rem, the width at which a gutter beside the picture exists at
+     all — the picture is centred at up to 46rem inside a 78rem page, and there
+     is no room either side of it before that. The prev/next nav at the foot of
+     the page carries this job on narrower screens. */
+  .intro__nav {
+    display: none;
+  }
+
+  @media (min-width: 78rem) {
+    /* Pinned to the wrap's content edges, not to the picture's edges, which is
+       what puts both arrows in the same place on all six project pages. The
+       pictures share a height but not a width, so anchoring to the frame — what
+       this did before — moved each arrow inward or outward according to whichever
+       project the visitor happened to be on.
+
+       `left`/`right` resolve against `.intro`'s padding box, so its own
+       `padding-inline` has to be paid back explicitly to land on the content
+       edge rather than the page edge; `--gutter` is that padding.
+
+       Vertically centred on the picture, computed rather than measured: the
+       figure is the first in-flow child of `.intro`, so the picture's top is
+       exactly `--section-y` (the intro's `padding-top`) and its centre is half
+       the shared height below that. Deriving it from `--hero-h` instead of
+       centring on the frame is what keeps the arrows off the caption, which is
+       inside the figure and varies in length from page to page.
+
+       The 11rem box is measured: `.wrap` is 78rem with 3rem gutters, so its
+       content is 72rem, and the widest picture (45.73rem, the ballistic solver)
+       leaves 13.13rem of gutter a side. 11rem plus the `--s-4` offset spends
+       12rem of that and keeps over 1rem clear of the picture. A definite width,
+       not a max, so both sides are the same size whatever their labels say.
+       Re-measure if `--page-max`, `--hero-h`, or the 46rem cap changes. */
+    .intro__nav {
+      display: flex;
+      position: absolute;
+      top: calc(var(--section-y) + (var(--hero-h) / 2));
+      transform: translateY(-50%);
+      align-items: center;
+      gap: var(--s-2);
+      width: 11rem;
+      font-size: var(--text-sm);
+      font-weight: 560;
+      line-height: 1.35;
+      color: var(--ink-secondary);
+      text-decoration: none;
+      transition: color var(--dur-fast) var(--ease-out);
+    }
+
+    .intro__nav:hover {
+      color: var(--ink);
+    }
+
+    /* Every project title here wraps to two lines at 11rem, and `balance` keeps
+       those two lines near-even instead of leaving one word stranded on the
+       second — which is what a raw wrap does to "Vision-based Piece Collection"
+       and is most of why these read as ragged. Two even lines also keep the
+       icon, which is centred against the whole label, sitting sensibly between
+       them rather than adrift beside a three-line block. */
+    .intro__nav span {
+      text-wrap: balance;
+    }
+
+    /* The arrow keeps its full 16px in a flex row that is otherwise free to
+       shrink it. */
+    .intro__nav svg {
+      flex: none;
+    }
+
+    /* Mirrored, so the pair reads as one control either side of the picture:
+       each label sits flush against its own arrow — which is the side away from
+       the image — and the slack from a short label like "Portfolio" falls on
+       the inside, next to the picture, instead of pushing the text off toward
+       the page edge. */
+    .intro__nav--prev {
+      left: var(--gutter);
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .intro__nav--next {
+      right: var(--gutter);
+      justify-content: flex-end;
+      text-align: right;
+    }
   }
 
   /* Sits close under the picture, so it reads as belonging to it rather than as
@@ -280,10 +389,14 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
   .intro__still {
     width: 100%;
     height: 100%;
-    /* `contain` rather than `cover`: the frame is already the picture's own
-       aspect, so there is nothing to crop and rounding should not shave an
-       edge off. */
-    object-fit: contain;
+    /* A no-op for every picture currently on the site: the frame is derived from
+       the picture's own aspect, so there is nothing to crop either way. It is
+       `cover` rather than `contain` only as the honest failure mode for a future
+       picture wider than a 1.64 ratio, which would hit the 46rem cap and leave
+       the frame shorter than its own aspect wants — `cover` trims the top and
+       bottom to fit, where `contain` would letterbox it in bars, and bars are
+       the one thing every other rule in this file exists to avoid. */
+    object-fit: cover;
     display: block;
   }
 
@@ -331,14 +444,35 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
     max-width: 26ch;
   }
 
-  /* Built with / When / Team, closing the opening block directly under the
-     title. The bottom margin is the intro's own, since this is now the last
-     thing in it — the Overview section below brings its own top rule and
-     padding. */
+  /* The source button and the Languages / Tools / When facts on one line,
+     directly under the title: button hard left, facts pushed to its right. It
+     carries the closing gap for the whole intro, since this is the last thing in
+     it — the Overview section below brings its own top rule and padding.
+
+     Stacked below 34rem, where the facts themselves stack and a row of both
+     would not fit. */
+  .intro__meta {
+    display: grid;
+    gap: var(--s-5);
+    margin-bottom: var(--s-7);
+  }
+
+  @media (min-width: 34rem) {
+    .intro__meta {
+      grid-auto-flow: column;
+      grid-auto-columns: max-content;
+      /* Against the facts' own label/value pair rather than centred on it: the
+         button lines up with the values, which is the row the eye reads. */
+      align-items: end;
+      gap: var(--s-9);
+    }
+  }
+
+  /* Built with / When / Team. */
   .intro__facts {
     display: grid;
     gap: var(--s-5);
-    margin: 0 0 var(--s-7);
+    margin: 0;
   }
 
   @media (min-width: 34rem) {
@@ -347,6 +481,12 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
       grid-auto-columns: max-content;
       gap: var(--s-9);
     }
+  }
+
+  .intro__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
   }
 
   .intro__facts-row dt {
