@@ -13,7 +13,8 @@ interface Props {
     | 'linkedin'
     | 'mail'
     | 'file'
-    | 'image';
+    | 'image'
+    | 'chevron-right';
   size?: number;
   class?: string;
 }
@@ -92,6 +93,7 @@ const { name, size = 20, class: className } = Astro.props;
       </>
     )
   }
+  {name === 'chevron-right' && <path d="M9 5l7 7-7 7" />}
   {
     name === 'image' && (
       <>

@@ -36,7 +36,6 @@ interface Props {
    */
   caption?: string | null;
   title: string;
-  overview: string;
   eyebrow?: { label: string; href: string };
   figure?: 'rays' | 'linkage' | 'trajectory' | 'contours' | 'spline' | 'cube';
   /**
@@ -45,6 +44,12 @@ interface Props {
    * is actually reachable from rather than a generic home link.
    */
   backHref: string;
+  /**
+   * Built with / When / Team — the last thing in the opening block, directly
+   * under the title. The Overview paragraph used to sit between the two; it is
+   * now its own section below this component, so the facts close the intro.
+   */
+  facts?: { label: string; value: string; href?: string }[];
 }
 
 const {
@@ -53,10 +58,10 @@ const {
   alt,
   caption = null,
   title,
-  overview,
   eyebrow,
   figure,
   backHref,
+  facts = [],
 } = Astro.props;
 
 /**
@@ -147,10 +152,26 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
 
   <h1 class="intro__title">{title}</h1>
 
-  <section class="intro__overview">
-    <p class="intro__overview-label label">Overview</p>
-    <p class="intro__overview-text">{overview}</p>
-  </section>
+  {
+    facts.length > 0 && (
+      <dl class="intro__facts">
+        {facts.map((fact) => (
+          <div class="intro__facts-row">
+            <dt class="label">{fact.label}</dt>
+            <dd>
+              {fact.href ? (
+                <a href={fact.href} rel="noopener">
+                  {fact.value}
+                </a>
+              ) : (
+                fact.value
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
 </div>
 
 <style>
@@ -161,12 +182,11 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
     padding-top: var(--section-y);
   }
 
-  /* Below 74rem there is not reliably enough room beside the centred 46rem
+  /* Below 78rem there is not reliably enough room beside the centred 46rem
      figure for the link's own text, so it is a plain line above the image.
-     From 74rem up, the side column is wide enough (`--page-max` is 78rem) for
-     the link to sit there instead, positioned against the wrap's own padding
-     edge and top-aligned with the figure via `--section-y`, the same offset
-     that gives the figure its own top spacing. */
+     From 78rem up it moves into the side column instead, anchored to the
+     picture rather than to the page edge — see the media query below for why
+     that breakpoint is 78rem and not the 74rem it used to be. */
   .intro__back {
     display: inline-flex;
     align-items: center;
@@ -186,11 +206,30 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
     color: var(--ink);
   }
 
-  @media (min-width: 74rem) {
+  /* Anchored to the picture, not to the page edge: `right` holds the link a
+     constant `--s-5` clear of the figure's left edge, so as the viewport grows
+     the link stays visually attached to the image instead of drifting off toward
+     the corner. `50%` is the wrap's centre and the figure is centred on it, so
+     half the figure's width plus the gap is the whole offset. Top-aligned with
+     the figure via `--section-y`, the same offset that gives the figure its own
+     top spacing.
+
+     The breakpoint is measured, and it moved from 74rem to 78rem when the
+     anchor changed: "Return to Portfolio" sets about 11rem wide, the figure
+     takes 46rem centred, and the gutters are 3rem each, so the link's left edge
+     lands at `wrap/2 - 35.5rem`. That is only positive from a 71rem wrap — a
+     77rem viewport — and 78rem is both the next round number and `--page-max`.
+     Below it the link is the plain line above the image. Re-measure this if the
+     link's wording or the figure's 46rem cap ever changes.
+
+     One known slack: a portrait still narrows the figure below 46rem via
+     `--fit`, and nothing here can read that rendered width, so the gap opens up
+     wider than `--s-5` on those pages. It is a larger gap, never a collision. */
+  @media (min-width: 78rem) {
     .intro__back {
       position: absolute;
       top: var(--section-y);
-      left: 0;
+      right: calc(50% + (46rem / 2) + var(--s-5));
       margin-bottom: 0;
     }
   }
@@ -292,16 +331,31 @@ const mediaStyle = [ratio && `--media-ratio: ${ratio}`, cropStyle]
     max-width: 26ch;
   }
 
-  .intro__overview {
-    margin-bottom: var(--s-7);
+  /* Built with / When / Team, closing the opening block directly under the
+     title. The bottom margin is the intro's own, since this is now the last
+     thing in it — the Overview section below brings its own top rule and
+     padding. */
+  .intro__facts {
+    display: grid;
+    gap: var(--s-5);
+    margin: 0 0 var(--s-7);
   }
 
-  .intro__overview-label {
-    margin-bottom: var(--s-2);
+  @media (min-width: 34rem) {
+    .intro__facts {
+      grid-auto-flow: column;
+      grid-auto-columns: max-content;
+      gap: var(--s-9);
+    }
   }
 
-  .intro__overview-text {
-    font-size: var(--text-base);
+  .intro__facts-row dt {
+    margin-bottom: var(--s-1);
+  }
+
+  .intro__facts-row dd {
+    margin: 0;
+    font-size: var(--text-sm);
     color: var(--ink-secondary);
   }
 </style>

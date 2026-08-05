@@ -1,0 +1,218 @@
+---
+import Math from './Math.astro';
+import type { Block } from '../lib/ballisticDerivation';
+
+/**
+ * One part's worth of worked algebra. Split out of `Derivation.astro` when that
+ * component stopped mapping over the parts uniformly: each step now carries its
+ * own hand-written lead paragraph and its own picture, so the three sections are
+ * written out rather than generated, and the block renderer has three callers
+ * instead of one.
+ */
+interface Props {
+  blocks: Block[];
+}
+
+const { blocks } = Astro.props;
+---
+
+{
+  blocks.map((block) => {
+    if (block.kind === 'defs') {
+      return (
+        <dl class="defs">
+          {block.lead && <p class="defs__lead">{block.lead}</p>}
+          {block.items.map((item) => (
+            <div class="defs__row">
+              <dt>
+                <Math tex={item.tex} />
+              </dt>
+              <dd>{item.text}</dd>
+            </div>
+          ))}
+        </dl>
+      );
+    }
+
+    if (block.kind === 'prose') {
+      /* Odd indices are the `$...$` spans, which is what an alternating split
+         on the delimiter guarantees. */
+      return (
+        <p class="prose">
+          {block.text.split('$').map((piece, i) => (i % 2 === 1 ? <Math tex={piece} /> : piece))}
+        </p>
+      );
+    }
+
+    if (block.kind === 'sub') {
+      return <h3 class="sub">{block.text}</h3>;
+    }
+
+    if (block.kind === 'chain') {
+      return (
+        <div class="chain">
+          {block.steps.map((tex) => (
+            <Math tex={tex} display />
+          ))}
+        </div>
+      );
+    }
+
+    if (block.kind === 'columns') {
+      return (
+        <div class="cols">
+          {[block.left, block.right].map((col) => (
+            <div class="cols__col">
+              <p class="label cols__head">{col.head}</p>
+              <div class="chain chain--flush">
+                {col.steps.map((tex) => (
+                  <Math tex={tex} display />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div class="result">
+        <p class="label result__label">{block.label}</p>
+        <Math tex={block.tex} display />
+      </div>
+    );
+  })
+}
+
+<style>
+  /* ---- Definitions ------------------------------------------------------- */
+
+  .defs {
+    margin: 0 0 var(--s-6);
+    display: grid;
+    gap: var(--s-2);
+  }
+
+  .defs__lead {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+    margin-bottom: var(--s-2);
+  }
+
+  .defs__row {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: var(--s-4);
+    align-items: baseline;
+  }
+
+  .defs__row dt {
+    text-align: right;
+  }
+
+  .defs__row dd {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--ink-secondary);
+    max-width: 56ch;
+  }
+
+  /* ---- Sub-headings and prose -------------------------------------------- */
+
+  .sub {
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-top: var(--s-7);
+    margin-bottom: var(--s-4);
+  }
+
+  .prose {
+    color: var(--ink-secondary);
+    max-width: 62ch;
+    margin-bottom: var(--s-4);
+  }
+
+  .prose:not(:first-child) {
+    margin-top: var(--s-6);
+  }
+
+  /* ---- Chains ------------------------------------------------------------ */
+
+  /* One continuous manipulation, marked as one object by a hairline down its
+     left edge. This is the notebook's own gesture — the bracket a person draws
+     beside a run of algebra to say these lines are one thought — and it is what
+     lets a reader see where one chain ends and the next begins without a
+     heading between them. */
+  .chain {
+    display: grid;
+    gap: var(--s-4);
+    margin-bottom: var(--s-6);
+    padding-left: var(--s-5);
+    border-left: 1px solid var(--rule);
+  }
+
+  /* Inside a column the rule would collide with the column gap. */
+  .chain--flush {
+    padding-left: 0;
+    border-left: 0;
+    margin-bottom: 0;
+  }
+
+  /* ---- Parallel columns -------------------------------------------------- */
+
+  .cols {
+    display: grid;
+    gap: var(--s-6);
+    margin-bottom: var(--s-6);
+    padding-left: var(--s-5);
+    border-left: 1px solid var(--rule);
+  }
+
+  /* Two columns only where both fit without either one scrolling more than it
+     would stacked. Below this they stack, which is also the honest reading
+     order: position first, then velocity. */
+  @media (min-width: 52rem) {
+    .cols {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--s-7);
+    }
+  }
+
+  .cols__head {
+    margin-bottom: var(--s-4);
+    color: var(--ink-tertiary);
+  }
+
+  /* ---- Results ----------------------------------------------------------- */
+
+  /* Where a chain lands. A sunken panel rather than a bordered card, so it reads
+     as the page's own paper set back a step — separation from tone, not from a
+     box, and no card nested in anything. */
+  .result {
+    background: var(--ground-sunken);
+    border-radius: var(--radius-md);
+    padding: var(--s-4) var(--s-5);
+    margin-bottom: var(--s-6);
+    /* A result sits on sunken paper, so its scroll-shadow covers have to be that
+       colour or they leave a pale block at the edges. */
+    --strip-bg: var(--ground-sunken);
+  }
+
+  .result__label {
+    color: var(--ink-secondary);
+    margin-bottom: var(--s-3);
+  }
+
+  /* The last block in a part should not push space against the disclosure's own
+     bottom padding. */
+  .defs:last-child,
+  .chain:last-child,
+  .cols:last-child,
+  .result:last-child {
+    margin-bottom: 0;
+  }
+</style>

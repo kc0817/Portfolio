@@ -1,0 +1,482 @@
+---
+import 'katex/dist/katex.min.css';
+import { Image } from 'astro:assets';
+import DerivationBlocks from './DerivationBlocks.astro';
+import Icon from './Icon.astro';
+import { DERIVATION } from '../lib/ballisticDerivation';
+import { url } from '../lib/site';
+import shootingVariables from '../assets/robotics/shooting-variables-diagram.png';
+import sotmDiagram from '../assets/robotics/sotm-diagram.png';
+import velocityDrop from '../assets/robotics/velocity-drop-diagram.png';
+
+/**
+ * The three steps of the solver, each one a heading, a paragraph saying what the
+ * step is for, a picture of it, and — folded away — the algebra that does it.
+ *
+ * This replaced a Raw math / Conceptual tab pair. The tabs asked the visitor to
+ * choose between two accounts of the same thing before they knew what either
+ * said; a per-step disclosure asks nothing, because the prose is the page and the
+ * math is an offer. That is the same layering PRODUCT.md calls for, moved from a
+ * mode switch to progressive disclosure.
+ *
+ * `<details>` and not a scripted accordion, for the reason the tabs were a radio
+ * group: with no JavaScript it still opens, and the summary already carries the
+ * expanded/collapsed state a script would have to announce by hand. Collapsed by
+ * default — most visitors are not here for the quartic.
+ *
+ * The steps are written out rather than mapped: each carries its own lead copy
+ * with its own emphasis, and the shared part is the block rendering, which lives
+ * in `DerivationBlocks`.
+ */
+const [step1, step2, step3] = DERIVATION;
+
+/**
+ * The two clips, as encoded. Both are silent — the audio track is stripped, not
+ * muted — and neither plays on its own: they carry `controls` and no autoplay,
+ * which is why they are written out here rather than going through `MediaSlot`
+ * (every mode that component offers starts playback for you).
+ *
+ * The dimensions are the encode's own, and they are here because the pair below
+ * sizes itself from aspect ratio.
+ */
+const CLIPS = {
+  basicShot: {
+    src: url('/media/ballistic-basic-shot.mp4'),
+    poster: url('/media/ballistic-basic-shot.jpg'),
+    width: 1280,
+    height: 800,
+  },
+  sotm: {
+    src: url('/media/ballistic-sotm.mp4'),
+    poster: url('/media/ballistic-sotm.jpg'),
+    width: 960,
+    height: 648,
+  },
+  hood: {
+    src: url('/media/ballistic-hood-compensation.mp4'),
+    poster: url('/media/ballistic-hood-compensation.jpg'),
+    width: 720,
+    height: 900,
+  },
+};
+---
+
+<div class="wrap deriv">
+  {/* ---- 1 --------------------------------------------------------------- */}
+  <section class="step">
+    <div class="step__row">
+      <div class="step__text">
+        <h2 class="step__title">
+          <span class="step__n">{step1.n}</span>
+          {step1.title}
+        </h2>
+
+        <p class="step__lead">
+          <strong>
+            The parabolic curve of a projectile can be defined with 3 data points: a
+            starting position, an ending position, and the angle of its velocity
+            vector when at the ending position (this is a tunable constant which I
+            call the impact angle).
+          </strong>{' '}
+          Using these 3 pieces of data, one can calculate the launch vector of the
+          ball at any given robot position (see derivation below).
+        </p>
+      </div>
+
+      <figure class="step__figure">
+        <video
+          class="step__video"
+          src={CLIPS.basicShot.src}
+          poster={CLIPS.basicShot.poster}
+          width={CLIPS.basicShot.width}
+          height={CLIPS.basicShot.height}
+          aria-label="The robot on the practice field firing a ball into the red goal from a standstill."
+          controls
+          playsinline
+          preload="metadata"
+          disablepictureinpicture></video>
+      </figure>
+    </div>
+
+    <details class="fold">
+      <summary class="fold__summary">
+        {/* The class is on a wrapper, not on `Icon` itself: a scoped style in
+            this file cannot reach the root element of a child component. */}
+        <span class="fold__chevron"><Icon name="chevron-right" size={18} /></span>
+        <span class="fold__label fold__label--shut">Show the math</span>
+        <span class="fold__label fold__label--open">Hide the math</span>
+      </summary>
+      {/* The diagram lives in here, beside the list of what each symbol means,
+          rather than out in the media column: it is a key to the variables the
+          algebra uses, so it is only of use to a reader who has opened the
+          algebra. Folding it away with them is the honest pairing. */}
+      <div class="fold__body">
+        <div class="decl decl--wide">
+          <div class="decl__text">
+            <DerivationBlocks blocks={step1.blocks.slice(0, 1)} />
+          </div>
+          <figure class="decl__figure">
+            <Image
+              src={shootingVariables}
+              alt="A side view of the shooter on the robot with the trajectory drawn as an arc to the goal. The exit velocity v leaves at hood angle θ above horizontal, the turret angle φ opens off the robot's heading across the horizontal distance d, and the impact angle i is marked at the ball where it meets the goal."
+              widths={[416, 832]}
+              sizes="(min-width: 52rem) 26rem, 90vw"
+              class="step__img step__img--plate"
+            />
+          </figure>
+        </div>
+        <DerivationBlocks blocks={step1.blocks.slice(1)} />
+      </div>
+    </details>
+  </section>
+
+  {/* ---- 2 --------------------------------------------------------------- */}
+  <section class="step">
+    <div class="step__row">
+      <div class="step__text">
+        <h2 class="step__title">
+          <span class="step__n">{step2.n}</span>
+          {step2.title}
+        </h2>
+
+        <p class="step__lead">
+          We also need a way to counteract the robot’s movement, because it will
+          alter the trajectory of the ball. To do this, we can use vector
+          subtraction and offset the previous 3D launch vector by the velocity at
+          the ball’s exit position. Note: because the ball’s launch position is not
+          guaranteed to be aligned with the robot’s axis of rotation, we also need
+          to account for the tangential velocity created by rotation (see
+          derivation below).
+        </p>
+      </div>
+
+      <figure class="step__figure">
+        <video
+          class="step__video"
+          src={CLIPS.sotm.src}
+          poster={CLIPS.sotm.poster}
+          width={CLIPS.sotm.width}
+          height={CLIPS.sotm.height}
+          aria-label="The robot driving across the practice field while shooting at the goal, without stopping to line up."
+          controls
+          playsinline
+          preload="metadata"
+          disablepictureinpicture></video>
+      </figure>
+    </div>
+
+    <details class="fold">
+      <summary class="fold__summary">
+        {/* The class is on a wrapper, not on `Icon` itself: a scoped style in
+            this file cannot reach the root element of a child component. */}
+        <span class="fold__chevron"><Icon name="chevron-right" size={18} /></span>
+        <span class="fold__label fold__label--shut">Show the math</span>
+        <span class="fold__label fold__label--open">Hide the math</span>
+      </summary>
+      <div class="fold__body">
+        <div class="decl">
+          <div class="decl__text">
+            <DerivationBlocks blocks={step2.blocks.slice(0, 1)} />
+          </div>
+          <figure class="decl__figure">
+            <Image
+              src={sotmDiagram}
+              alt="A 3D vector diagram. The blue vector V_ball is the launch vector the ball needs; the red vector V_robot is the robot's own velocity along the floor, and its negative is added to the tip of V_ball; the purple vector V_adjusted is the result the shooter is actually commanded to."
+              widths={[320, 610]}
+              sizes="(min-width: 52rem) 20rem, 90vw"
+              class="step__img step__img--plate"
+            />
+          </figure>
+        </div>
+        <DerivationBlocks blocks={step2.blocks.slice(1)} />
+      </div>
+    </details>
+  </section>
+
+  {/* ---- 3 --------------------------------------------------------------- */}
+  <section class="step">
+    <div class="step__row">
+      <div class="step__text">
+        <h2 class="step__title">
+          <span class="step__n">{step3.n}</span>
+          {step3.title}
+        </h2>
+
+        <p class="step__lead">
+          The Law of Conservation of Energy states that energy cannot be created.
+          Therefore, when the shooter contacts the ball and the ball speeds up, the
+          shooter wheel must slow down. Since the shooter wheel has lost some of its
+          energy, it will transfer less energy to the <em>next</em> ball that is
+          shot, decreasing shot accuracy.
+        </p>
+        <p class="step__lead">
+          To mitigate this problem, we can alter our hood angle — changing the arc
+          of the trajectory — to compensate for the lower exit speed; and we can
+          also alter our turret angle to ensure that we can still shoot on the move
+          (see derivation below).
+        </p>
+      </div>
+
+      <figure class="step__figure">
+        <video
+          class="step__video"
+          src={CLIPS.hood.src}
+          poster={CLIPS.hood.poster}
+          width={CLIPS.hood.width}
+          height={CLIPS.hood.height}
+          aria-label="The robot firing a burst of shots at the goal while the hood adjusts between them."
+          controls
+          playsinline
+          preload="metadata"
+          disablepictureinpicture></video>
+      </figure>
+    </div>
+
+    <details class="fold">
+      <summary class="fold__summary">
+        {/* The class is on a wrapper, not on `Icon` itself: a scoped style in
+            this file cannot reach the root element of a child component. */}
+        <span class="fold__chevron"><Icon name="chevron-right" size={18} /></span>
+        <span class="fold__label fold__label--shut">Show the math</span>
+        <span class="fold__label fold__label--open">Hide the math</span>
+      </summary>
+      <div class="fold__body">
+        <div class="decl">
+          <div class="decl__text">
+            <DerivationBlocks blocks={step3.blocks.slice(0, 1)} />
+          </div>
+          <figure class="decl__figure">
+            <Image
+              src={velocityDrop}
+              alt="A telemetry plot of shooter wheel velocity over time. Three shots are marked as shaded bands; the wheel is running steadily before the first, and a labelled velocity drop takes it well below that level across the three shots before it recovers."
+              widths={[320, 640]}
+              sizes="(min-width: 52rem) 20rem, 90vw"
+              class="step__img step__img--plate"
+            />
+          </figure>
+        </div>
+        <DerivationBlocks blocks={step3.blocks.slice(1)} />
+      </div>
+    </details>
+  </section>
+</div>
+
+<style>
+  .deriv {
+    padding-block: var(--s-7) var(--s-8);
+    border-top: 1px solid var(--rule);
+    display: grid;
+    gap: var(--s-8);
+  }
+
+  /* ---- A step ------------------------------------------------------------ */
+
+  .step + .step {
+    padding-top: var(--s-7);
+    border-top: 1px solid var(--rule);
+  }
+
+  /* Text left, pictures right — the same split the Overview above uses, so the
+     page reads as one column of prose with one column of pictures beside it
+     rather than as two differently laid-out sections. */
+  .step__row {
+    display: grid;
+    gap: var(--s-6);
+  }
+
+  @media (min-width: 52rem) {
+    .step__row {
+      /* 28rem rather than the Overview's 24rem: two of the three steps hold a
+         diagram and a clip side by side, and 24rem would put each of them under
+         11rem wide. The picture column is still flush to the page edge, which is
+         the alignment that reads. */
+      grid-template-columns: minmax(0, 1fr) 28rem;
+      align-items: start;
+      gap: var(--s-9);
+    }
+
+    .step__figure {
+      width: 100%;
+    }
+  }
+
+  .step__title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    font-size: var(--text-xl);
+    margin-bottom: var(--s-5);
+  }
+
+  /* The step number is information — the solver is three ordered steps and the
+     order is the argument — so this is not a decorative section counter. */
+  .step__n {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-label);
+    color: var(--ink-tertiary);
+    /* Baseline-aligned with the title it numbers, held on its own hairline
+       column so all three read as a set. */
+    flex: none;
+    padding-right: var(--s-3);
+    border-right: 1px solid var(--rule);
+  }
+
+  .step__lead {
+    color: var(--ink-secondary);
+    max-width: 62ch;
+  }
+
+  .step__lead + .step__lead {
+    margin-top: var(--s-4);
+  }
+
+  /* No fixed box and no `cover` anywhere in here. Every picture on this page is
+     either a labelled diagram or footage of the robot, and cropping one to a shape
+     the layout preferred would cut a variable name or a goal out of it. They keep
+     their own aspect; the column just sets how wide they get. (Where a clip needed
+     tighter framing, that was done at encode time — see the crop on the shoot-on-
+     the-move clip — so nothing is cropped by CSS.) */
+  .step__figure,
+  .decl__figure {
+    margin: 0;
+  }
+
+  /* The clip has the whole media column to itself now that the diagrams have moved
+     into the disclosures. */
+  .step__figure {
+    width: min(28rem, 100%);
+  }
+
+  /* ---- Declarations and their diagram ------------------------------------ */
+
+  /* The symbol list on the left, the diagram that labels those symbols on the
+     right. Stacked below the breakpoint, where 20rem of diagram beside a
+     definition list would leave neither one readable. */
+  .decl {
+    display: grid;
+    gap: var(--s-5);
+    margin-bottom: var(--s-6);
+  }
+
+  @media (min-width: 52rem) {
+    .decl {
+      grid-template-columns: minmax(0, 1fr) 20rem;
+      align-items: start;
+      gap: var(--s-7);
+    }
+
+    /* Step 1's diagram is nearly three times as wide as it is tall — at 20rem it
+       would be a 6rem-tall strip with type in it. */
+    .decl--wide {
+      grid-template-columns: minmax(0, 1fr) 26rem;
+    }
+  }
+
+  /* The list already carries its own bottom margin; inside the row that would
+     push the two columns out of alignment. */
+  .decl__text :global(.defs) {
+    margin-bottom: 0;
+  }
+
+  .step__img,
+  .step__video {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+  }
+
+  /* The diagrams are drawn on white, which is lighter than the page's own warm
+     ground — a hairline is what keeps that from reading as a blown-out rectangle
+     with no edge. */
+  .step__img--plate {
+    background: var(--ground-raised);
+    border: 1px solid var(--rule);
+  }
+
+  /* Letterbox bars inside a clip's frame read as part of the frame rather than as
+     a gap in it. */
+  .step__video {
+    background: var(--ground-inverse);
+  }
+
+  /* ---- The disclosure ---------------------------------------------------- */
+
+  .fold {
+    margin-top: var(--s-6);
+    /* Wider than the prose beside it: the quartic and the S² expansion are
+       genuinely wide, and every rem here is a rem they do not have to scroll. */
+    max-width: 54rem;
+  }
+
+  .fold__summary {
+    /* The default triangle is replaced by the drawn chevron below, and it has to
+       go in both syntaxes — WebKit still reads only the pseudo-element. */
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    cursor: pointer;
+    /* The site's tracked mono label: this is scaffolding text, not a reported
+       value. */
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+    /* A negative inline start so the chevron hangs in the margin and the label
+       sits flush with the prose above it. */
+    margin-left: calc(-1 * var(--s-2));
+    padding: var(--s-2);
+    border-radius: var(--radius-sm);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .fold__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .fold__summary:hover {
+    color: var(--ink);
+  }
+
+  .fold__summary:focus-visible {
+    outline: 2px solid var(--accent-blue-dark);
+    outline-offset: 2px;
+  }
+
+  /* Points right when shut, down when open — the state is in the mark, not only
+     in the words. */
+  .fold__chevron {
+    flex: none;
+    display: flex;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  .fold[open] .fold__chevron {
+    transform: rotate(90deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fold__chevron {
+      transition: none;
+    }
+  }
+
+  /* Only one of the two labels is ever in the accessibility tree, so the summary
+     announces the action rather than both actions. */
+  .fold__label--open,
+  .fold[open] .fold__label--shut {
+    display: none;
+  }
+
+  .fold[open] .fold__label--open {
+    display: inline;
+  }
+
+  .fold__body {
+    padding-top: var(--s-6);
+  }
+</style>

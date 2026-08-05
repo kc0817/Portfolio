@@ -1,8 +1,11 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
 import PageIntro from './PageIntro.astro';
+import Derivation from './Derivation.astro';
 import { CATEGORY_META, sectionUrl, url } from '../lib/site';
 import { heroOf } from '../lib/projectMedia';
+import decodeRobots from '../assets/robotics/decode-robots.png';
 
 /**
  * The full project page body. It used to be shared by every project's own URL and
@@ -59,6 +62,9 @@ const facts = [
       href: data.collaborative.ownerUrl,
     },
 ].filter(Boolean) as { label: string; value: string; href?: string }[];
+
+// The one project with hand-written page sections rather than just a summary.
+const isBallistic = project.id === 'ballistic-physics-solver';
 ---
 
 <article>
@@ -68,45 +74,93 @@ const facts = [
     alt={hero?.alt ?? data.posterAlt ?? `${data.title} running`}
     caption={hero?.caption ?? null}
     title={data.title}
-    overview={data.summary}
     eyebrow={{ label: meta.label, href: sectionUrl(data.category) }}
     figure={FIGURE[data.category]}
     backHref={sectionUrl(data.category)}
+    facts={facts}
   />
 
   {
-    (facts.length > 0 || data.sourceLost) && (
+    data.sourceLost && (
       <div class="wrap layout">
-        {facts.length > 0 && (
-          <dl class="facts">
-            {facts.map((fact) => (
-              <div class="facts__row">
-                <dt class="label">{fact.label}</dt>
-                <dd>
-                  {fact.href ? (
-                    <a href={fact.href} rel="noopener">
-                      {fact.value}
-                    </a>
-                  ) : (
-                    fact.value
-                  )}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )}
-
-        {
-          data.sourceLost && (
-            <p class="lost">
-              The source for this project was written on a school device and did not
-              survive graduation.
-            </p>
-          )
-        }
+        <p class="lost">
+          The source for this project was written on a school device and did not
+          survive graduation.
+        </p>
       </div>
     )
   }
+
+  {/* The Overview, now its own hairline-separated section below the facts rail
+      rather than a block inside the intro. Every project gets its frontmatter
+      summary here; the ballistic solver gets its own longer opening instead,
+      because that page's summary still has to work as a card and a meta
+      description and this copy is far too long for either. */}
+  <section class="wrap overview" aria-labelledby="overview-heading">
+    <h2 id="overview-heading">Overview</h2>
+
+    {
+      isBallistic ? (
+        <>
+          {/* The prose and the list share one column so the picture beside them
+              can top-align with the first line of the paragraph rather than
+              starting level with the list further down. */}
+          <div class="overview__row">
+            <div class="overview__main">
+              <div class="overview__lead">
+                <p>
+                  For the 2025–2026 FTC &amp; FRC season, I programmed a
+                  projectile-motion inspired shooting system to allow our robot to
+                  launch balls from anywhere on the field. To test this algorithm, I
+                  also set up a custom simulation to visualize the trajectories being
+                  calculated.
+                </p>
+                <p>This project consists of 6 main components:</p>
+              </div>
+
+              <ol class="overview__steps">
+                <li>
+                  Use the goal position, robot position, and a desired impact angle to
+                  calculate a 3D launch vector that will launch the ball into the goal
+                </li>
+                <li>
+                  Offset the launch vector by the robot velocity to allow shooting
+                  while moving
+                </li>
+                <li>
+                  Calculate a target turret and hood angle to compensate for
+                  deviations in actual exit speed
+                </li>
+                <li>Run System Identification tests to convert sensor readings into SI units</li>
+                <li>Iteratively test the algorithm in simulation</li>
+                <li>
+                  Design responsive &amp; accurate control systems for the shooter,
+                  turret, and hood
+                </li>
+              </ol>
+            </div>
+
+            {/* Not a MediaSlot: this is a labelled two-panel figure, and every
+                `object-fit: cover` slot on the site would crop the captions off
+                it. It keeps its own 432×664 aspect and is never cropped. */}
+            <figure class="overview__figure">
+              <Image
+                src={decodeRobots}
+                alt="Two photographs labelled 8393 FTC robot and 8393 FRC robot. The FTC robot is a compact black chassis with a shooter assembly and white omni wheels; the FRC robot is a larger black drivebase on a competition field scattered with yellow game balls."
+                widths={[432, 864]}
+                sizes="(min-width: 46rem) 24rem, 90vw"
+                class="overview__img"
+              />
+            </figure>
+          </div>
+        </>
+      ) : (
+        <p class="overview__text">{data.summary}</p>
+      )
+    }
+  </section>
+
+  {isBallistic && <Derivation />}
 
   {
     (prev || next) && (
@@ -131,7 +185,7 @@ const facts = [
 </article>
 
 <style>
-  /* ---- Facts --------------------------------------------------------------- */
+  /* ---- Source-lost note ------------------------------------------------------ */
 
   .layout {
     display: grid;
@@ -140,34 +194,128 @@ const facts = [
     border-top: 1px solid var(--rule);
   }
 
-  .facts dl {
-    display: grid;
-    gap: var(--s-5);
-  }
-
-  @media (min-width: 34rem) {
-    .facts dl {
-      grid-auto-flow: column;
-      grid-auto-columns: max-content;
-      gap: var(--s-9);
-    }
-  }
-
-  .facts__row dt {
-    margin-bottom: var(--s-1);
-  }
-
-  .facts__row dd {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--ink-secondary);
-  }
-
   .lost {
     color: var(--ink-tertiary);
     font-size: var(--text-sm);
     max-width: 56ch;
   }
+
+  /* ---- Overview ----------------------------------------------------------- */
+
+  /* Its own section since the facts rail moved above it, separated by the same
+     hairline the derivation and the prev/next nav already use, so the page reads
+     as one rhythm rather than one bordered section among unbordered blocks. */
+  .overview {
+    padding-block: var(--s-6) var(--s-7);
+    border-top: 1px solid var(--rule);
+  }
+
+  /* The same spacing the derivation's own h2 carries, so the two section titles
+     read as the same rank rather than as two similar-looking headings. */
+  .overview h2 {
+    margin-bottom: var(--s-5);
+  }
+
+  /* The five projects that show their frontmatter summary. Held to a measure —
+     the section is full width now, and a one-line summary running 78rem would be
+     unreadable. */
+  .overview__text {
+    font-size: var(--text-base);
+    color: var(--ink-secondary);
+    max-width: 66ch;
+  }
+
+  /* ---- Overview, ballistic solver only ------------------------------------ */
+
+  .overview__lead p {
+    font-size: var(--text-base);
+    color: var(--ink-secondary);
+  }
+
+  /* The second line — "This project consists of 6 main components:" — leads
+     directly into the list below it, so it sits closer to that than to the
+     paragraph it follows. */
+  .overview__lead p + p {
+    margin-top: var(--s-4);
+  }
+
+  .overview__row {
+    display: grid;
+    gap: var(--s-6);
+  }
+
+  @media (min-width: 46rem) {
+    .overview__row {
+      /* The picture takes its own 24rem and the text keeps the rest, rather than
+         splitting 50/50 — an even split would leave the paragraph at a narrower
+         measure than it needs while the figure sat in space it cannot use.
+
+         The track is stated as `24rem` and not `auto`: the figure's own width is
+         `min(24rem, 100%)`, and a percentage against a content-sized track is
+         circular — the track waits on the figure, the figure waits on the track,
+         and the column resolves to zero. A definite track breaks the cycle. */
+      grid-template-columns: minmax(0, 1fr) 24rem;
+      /* Start, not centre, is what puts the picture's top on the paragraph's
+         first line. */
+      align-items: start;
+      gap: var(--s-9);
+    }
+
+    /* Fills the definite track above, which also right-aligns it against the
+       page edge without an auto margin — and an auto margin here is exactly what
+       would reintroduce the shrink-to-fit collapse. */
+    .overview__figure {
+      width: 100%;
+    }
+  }
+
+  /* Prose and list in one column, so the figure beside them aligns to the top of
+     the paragraph rather than to the top of the list. */
+  .overview__main > * {
+    max-width: 66ch;
+  }
+
+  .overview__steps {
+    display: grid;
+    gap: var(--s-4);
+    margin: var(--s-5) 0 0;
+    padding-left: var(--s-5);
+  }
+
+  .overview__steps li {
+    color: var(--ink-secondary);
+    max-width: 54ch;
+  }
+
+  /* The figure is the picture's own shape, 432×664, and nothing crops it: the
+     photo carries burnt-in "8393 FTC robot" / "8393 FRC robot" labels that any
+     `cover` slot on this site would cut off.
+
+     Width and aspect-ratio are both explicit rather than inherited from the
+     image, so the box is correct before the file arrives and nothing reflows when
+     it does. This value is the stacked, single-column case; the two-column rule
+     above overrides it to fill its own definite track. */
+  .overview__figure {
+    margin: 0;
+    width: min(24rem, 100%);
+    aspect-ratio: 432 / 664;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* `contain`, not `cover`. The frame is already the picture's exact aspect so
+     there is nothing to crop either way — but if this photo is ever swapped for
+     one of a different shape, `contain` letterboxes it and `cover` would silently
+     start cutting the labels off. The no-crop guarantee belongs in the CSS, not
+     in a note about the current file. */
+  .overview__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
 
   /* ---- Neighbours -------------------------------------------------------- */
 

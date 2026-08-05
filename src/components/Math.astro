@@ -1,0 +1,110 @@
+---
+import katex from 'katex';
+
+/**
+ * Math, typeset at build time. KaTeX runs in the Astro frontmatter, so what ships
+ * is finished markup — no client script, no layout shift while an engine boots,
+ * and no equation that fails to appear because JavaScript was unavailable. This is
+ * the only reason a math dependency is tolerable on a static site.
+ *
+ * Real math needs letterforms the site's three faces cannot supply: an upright
+ * roman for operators and digits, a true math italic for variables (the `v` in
+ * `v cos θ` is a different glyph from an obliqued sans `v`), and extensible
+ * radicals and delimiters that grow with what they enclose. That is a fourth type
+ * role, not a fourth brand face — KaTeX's own fonts are the honest answer, the
+ * way Plex Mono is the honest answer for a reported value. Substituting Plex Sans
+ * here would render mathematics in a face that has no math italic and no
+ * stretchable √, which is how math ends up looking like a word processor.
+ *
+ * `output` stays at KaTeX's default (`htmlAndMathml`): the visual layer is
+ * `aria-hidden`, and a parallel MathML tree is what a screen reader actually
+ * reads. Dropping to `html` would halve the DOM and make every equation silent.
+ */
+interface Props {
+  tex: string;
+  /**
+   * Display math is centred-block by default in KaTeX; every equation here is
+   * left-aligned instead, because these are steps in a worked derivation read as
+   * a column, not plates in a paper.
+   */
+  display?: boolean;
+}
+
+const { tex, display = false } = Astro.props;
+
+/**
+ * `throwOnError: false` would render a parse failure as red inline text on the
+ * page, which is a defect that ships. These equations are authored in the repo
+ * and never come from user input, so a bad one is a build-time mistake and
+ * should stop the build — that is what the default `true` does.
+ */
+const html = katex.renderToString(tex, {
+  displayMode: display,
+  strict: 'warn',
+  trust: false,
+});
+---
+
+<span class:list={['math', display && 'math--display']} set:html={html} />
+
+<style>
+  .math {
+    /* KaTeX sizes itself in em, so one variable here retunes every equation
+       against the surrounding Plex Sans, whose x-height runs taller than
+       KaTeX_Main's. */
+    font-size: 1.09em;
+    color: var(--ink);
+  }
+
+  /* A wide equation scrolls inside its own strip rather than widening the page.
+     The S² expansion and the quartic are genuinely wider than a phone, and the
+     alternative to scrolling them is shrinking them past reading size.
+
+     On a phone about a dozen of these strips overflow, and a touch device draws no
+     resting scrollbar — so the strip needs to say so itself. The four background
+     layers are the local/scroll shadow trick: the two page-coloured covers are
+     `local` and travel with the content, so they sit over the shadows only while
+     that edge is at its limit; the two shadows are `scroll` and stay pinned to
+     the visible edges. The result is an edge that darkens exactly when there is
+     more equation in that direction, and nothing at all on the equations that
+     fit — no scripted measurement, and no permanent fade lying about content
+     that is not there. */
+  .math--display {
+    display: block;
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Room for the descenders and the focus ring of a scrolled strip, and for
+       the scrollbar itself where the platform draws one in flow. */
+    padding-block: var(--s-1);
+    scrollbar-width: thin;
+
+    /* The covers have to match whatever surface the strip sits on. That comes in
+       as `--strip-bg` from an ancestor, with the page ground as the fallback —
+       written as a fallback rather than as a `--strip-bg: var(--ground)`
+       declaration here, because a custom property set on the element itself beats
+       an ancestor's value and would make every override silently dead. */
+    background:
+      linear-gradient(to right, var(--strip-bg, var(--ground)) 40%, transparent) left center /
+        2rem 100% no-repeat local,
+      linear-gradient(to left, var(--strip-bg, var(--ground)) 40%, transparent) right center /
+        2rem 100% no-repeat local,
+      radial-gradient(farthest-side at left, rgba(22, 24, 28, 0.13), transparent) left center /
+        0.6rem 100% no-repeat scroll,
+      radial-gradient(farthest-side at right, rgba(22, 24, 28, 0.13), transparent) right center /
+        0.6rem 100% no-repeat scroll;
+  }
+
+  .math--display :global(.katex-display) {
+    margin: 0;
+    /* Left, not centred: these read down a column as a chain of steps. */
+    text-align: left;
+  }
+
+  .math--display :global(.katex-display > .katex) {
+    text-align: left;
+    /* KaTeX centres display math by making the inner box full-width; that also
+       makes every strip report itself as overflowing. */
+    width: max-content;
+    max-width: none;
+  }
+</style>
