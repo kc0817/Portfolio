@@ -130,6 +130,14 @@ const { blocks } = Astro.props;
     margin-bottom: var(--s-4);
   }
 
+  /* That top margin is for a heading that interrupts a run of algebra — it needs
+     to belong to what follows it, not to what came before. A heading that opens
+     the block has nothing above it to separate from, so the margin is dead space
+     between a disclosure's summary and its own first line. */
+  .sub:first-child {
+    margin-top: 0;
+  }
+
   .prose {
     color: var(--ink-secondary);
     max-width: 62ch;

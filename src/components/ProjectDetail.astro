@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
 import PageIntro from './PageIntro.astro';
 import Derivation from './Derivation.astro';
 import { CATEGORY_META, sectionUrl, url } from '../lib/site';
@@ -47,13 +48,14 @@ const hero = heroOf(project.id);
 
 const meta = CATEGORY_META[data.category];
 
-// Built with, then When, below it — in that order on every project. Team is
+// Languages, then Tools, then When, below it — in that order on every project. Team is
 // dropped for robotics: those credit BrainStem as the repo owner, which reads
 // as a team credit line the robotics blurb on the home page already carries,
 // and Kevin's call was to cut it from the page itself. Research keeps it —
 // AutoOMR's collaborator credit is the one team line that still belongs here.
 const facts = [
-  data.stack.length > 0 && { label: 'Built with', value: data.stack.join(', ') },
+  data.languages.length > 0 && { label: 'Languages', value: data.languages.join(', ') },
+  data.tools.length > 0 && { label: 'Tools', value: data.tools.join(', ') },
   data.period && { label: 'When', value: data.period },
   data.collaborative &&
     data.category !== 'robotics' && {
@@ -63,8 +65,31 @@ const facts = [
     },
 ].filter(Boolean) as { label: string; value: string; href?: string }[];
 
+/**
+ * The repository this project lives in, closing the opening block as a single
+ * button. The other `links` kinds are deliberately not rendered — the demo/repo
+ * button row was cut from this page and only the source link came back, so a
+ * project whose one link is an itch.io demo shows no button rather than a
+ * differently-labelled one.
+ *
+ * The label is fixed rather than taken from `link.label`: the frontmatter labels
+ * are repo-specific ("Robot code", "Source"), and across six pages that reads as
+ * six different buttons when it is one affordance. The specificity is in the URL.
+ */
+const repo = data.links.find((l) => l.kind === 'repo');
+
 // The one project with hand-written page sections rather than just a summary.
 const isBallistic = project.id === 'ballistic-physics-solver';
+
+// The arrows either side of the main image. The first project has no
+// previous neighbour and the last has no next one, so those sides point back
+// to the portfolio instead of dead-ending.
+const prevNav = prev
+  ? { label: prev.data.title, href: url(`/projects/${prev.id}`) }
+  : { label: 'Portfolio', href: sectionUrl(data.category) };
+const nextNav = next
+  ? { label: next.data.title, href: url(`/projects/${next.id}`) }
+  : { label: 'Portfolio', href: sectionUrl(data.category) };
 ---
 
 <article>
@@ -76,9 +101,19 @@ const isBallistic = project.id === 'ballistic-physics-solver';
     title={data.title}
     eyebrow={{ label: meta.label, href: sectionUrl(data.category) }}
     figure={FIGURE[data.category]}
-    backHref={sectionUrl(data.category)}
     facts={facts}
-  />
+    prevNav={prevNav}
+    nextNav={nextNav}
+  >
+    {
+      repo && (
+        <a class="action" href={repo.href} target="_blank" rel="noopener noreferrer">
+          <Icon name="github" size={16} />
+          View on GitHub
+        </a>
+      )
+    }
+  </PageIntro>
 
   {
     data.sourceLost && (
@@ -115,7 +150,7 @@ const isBallistic = project.id === 'ballistic-physics-solver';
                   also set up a custom simulation to visualize the trajectories being
                   calculated.
                 </p>
-                <p>This project consists of 6 main components:</p>
+                <p>This project consists of 5 main components:</p>
               </div>
 
               <ol class="overview__steps">
@@ -131,7 +166,6 @@ const isBallistic = project.id === 'ballistic-physics-solver';
                   Calculate a target turret and hood angle to compensate for
                   deviations in actual exit speed
                 </li>
-                <li>Run System Identification tests to convert sensor readings into SI units</li>
                 <li>Iteratively test the algorithm in simulation</li>
                 <li>
                   Design responsive &amp; accurate control systems for the shooter,
@@ -185,6 +219,36 @@ const isBallistic = project.id === 'ballistic-physics-solver';
 </article>
 
 <style>
+  /* ---- Source link -------------------------------------------------------- */
+
+  /* Slotted into the intro, so `PageIntro` owns the row's placement and this
+     owns the button. Same shape as the action buttons this page used to carry
+     before it was cut back, so if a demo link ever returns beside it the two
+     already match. */
+  .action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding: var(--s-3) var(--s-5);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--rule-strong);
+    background: var(--ground-raised);
+    color: var(--ink);
+    font-size: var(--text-sm);
+    font-weight: 560;
+    text-decoration: none;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .action:hover {
+    border-color: var(--ink-tertiary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+
   /* ---- Source-lost note ------------------------------------------------------ */
 
   .layout {

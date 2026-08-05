@@ -16,9 +16,18 @@
  *      component carrying gravity), and the notes' final hood angle uses
  *      `atan(s_z / √(s_x²+s_y²))` — so the impact angle is the same shape.
  *
- * Nothing else departs from the notes. The intermediate algebra is kept in full,
- * including steps a paper would compress, because the grind is part of what the
- * page is showing.
+ * Nothing else departs from the notes mathematically. The notation does, in one
+ * place: the notes' `v_b`, `v_r` and `v` are spelled `\vec{v}_ball`,
+ * `\vec{v}_robot` and `\vec{v}_adjusted` wherever they appear as whole vectors, and
+ * each is declared before it is used. A one-letter subscript is fine in a notebook
+ * where the writer holds the key in their head; on a page a reader arrives at cold,
+ * `v_b` and `v_r` are two glyphs apart and name completely different things. The
+ * component subscripts stay short — `v_rx`, `v_bz` — because they appear inside the
+ * quartic and the S² expansion, where spelling them out would cost more legibility
+ * than it buys.
+ *
+ * The intermediate algebra is kept in full, including steps a paper would compress,
+ * because the grind is part of what the page is showing.
  */
 
 /** A definition list — a symbol and what it stands for. */
@@ -90,7 +99,7 @@ export interface Part {
 export const DERIVATION: Part[] = [
   {
     n: '1',
-    title: 'Computing target exit speed',
+    title: 'Computing desired 3D launch vector of ball',
     blocks: [
       {
         kind: 'defs',
@@ -183,7 +192,7 @@ export const DERIVATION: Part[] = [
       {
         kind: 'chain',
         steps: [
-          String.raw`\vec{v}_b = \begin{bmatrix}
+          String.raw`\vec{v}_{\text{ball}} = \begin{bmatrix}
             v\cos\theta\cos\phi \\[2pt]
             v\cos\theta\sin\phi \\[2pt]
             v\sin\theta
@@ -201,22 +210,50 @@ export const DERIVATION: Part[] = [
         kind: 'defs',
         lead: 'Assuming',
         items: [
-          { tex: '\\vec{v}_{cm}', text: 'translational velocity' },
-          { tex: '\\vec{\\omega}', text: 'angular velocity' },
+          {
+            tex: '\\vec{v}_{cm}',
+            text: 'robot velocity at center of mass (assumed axis of rotation)',
+          },
+          { tex: '\\vec{\\omega}', text: 'robot angular velocity' },
           { tex: '\\vec{r}', text: 'ball exit position relative to robot position' },
+          {
+            tex: '\\vec{v}_{\\text{robot}}',
+            text: 'robot velocity at exit position of ball',
+          },
+          {
+            tex: '\\vec{v}_{\\text{ball}}',
+            text: 'desired 3D launch vector of ball',
+          },
+          {
+            tex: '\\vec{v}_{\\text{adjusted}}',
+            text: 'the actual launch vector we want to aim at',
+          },
         ],
       },
       {
         kind: 'chain',
-        steps: [String.raw`\vec{v}_r = \vec{v}_{cm} + \vec{\omega} \times \vec{r}`],
+        steps: [String.raw`\vec{v}_{\text{robot}} = \vec{v}_{cm} + \vec{\omega} \times \vec{r}`],
       },
       { kind: 'sub', text: 'Constructing the desired launch vector' },
       {
         kind: 'chain',
         steps: [
-          String.raw`\vec{v} + \vec{v}_r = \vec{v}_b`,
-          String.raw`\vec{v} = \vec{v}_b - \vec{v}_r`,
+          String.raw`\vec{v}_{\text{adjusted}} + \vec{v}_{\text{robot}} = \vec{v}_{\text{ball}}`,
+          String.raw`\vec{v}_{\text{adjusted}} = \vec{v}_{\text{ball}} - \vec{v}_{\text{robot}}`,
         ],
+      },
+      {
+        kind: 'prose',
+        text: 'Finally, your target launch speed equals the length of this launch vector.',
+      },
+      {
+        kind: 'result',
+        label: 'Target launch speed',
+        tex: String.raw`\left|\vec{v}_{\text{adjusted}}\right| = \sqrt{
+          v_{\text{adjusted},x}^{\,2}
+          + v_{\text{adjusted},y}^{\,2}
+          + v_{\text{adjusted},z}^{\,2}
+        }`,
       },
     ],
   },
@@ -236,7 +273,7 @@ export const DERIVATION: Part[] = [
       { kind: 'prose', text: 'We already know that:' },
       {
         kind: 'chain',
-        steps: [String.raw`\vec{s} + \vec{v}_r = \vec{v}_b`],
+        steps: [String.raw`\vec{s} + \vec{v}_{\text{robot}} = \vec{v}_{\text{ball}}`],
       },
       {
         kind: 'columns',
@@ -318,10 +355,26 @@ export const DERIVATION: Part[] = [
         kind: 'result',
         label: 'Quartic in time of flight',
         tex: String.raw`0 = \left|\vec{d}\right|^2
-          - 2\left(\vec{d} \cdot \vec{v}_r\right) t
-          + \left(\left|\vec{v}_r\right|^2 - S^2 + g d_z\right) t^2
+          - 2\left(\vec{d} \cdot \vec{v}_{\text{robot}}\right) t
+          + \left(\left|\vec{v}_{\text{robot}}\right|^2 - S^2 + g d_z\right) t^2
           - g v_{rz} t^3
           + \tfrac{1}{4} g^2 t^4`,
+      },
+      { kind: 'sub', text: 'Finding zeroes of time of flight polynomial' },
+      {
+        kind: 'prose',
+        text:
+          'We want to find this function’s zeroes, because they represent all of the ' +
+          'possible trajectories that we could take to compensate for an inaccurate ' +
+          'launch speed. So I approximated the zeros using a two-stage search. First, ' +
+          'the flight-time domain is discretized into low-resolution intervals to ' +
+          'identify regions where the function crossed zero. These intervals were then ' +
+          'refined with bisection, which repeatedly halves the interval until the root ' +
+          'estimate achieved a maximum error of $10^{-3}$ seconds. At a maximum, the ' +
+          'code could return 2 flight times (a low arc & a high arc shot). Returning 1 ' +
+          'time of flight means the high and low arc shot converged (this trajectory ' +
+          'minimizes launch speed). Returning 0 flight times signifies that the launch ' +
+          'speed just dropped too much and there are no valid trajectories.',
       },
       { kind: 'sub', text: 'Recalculating the new launch vector' },
       {
@@ -331,7 +384,7 @@ export const DERIVATION: Part[] = [
       {
         kind: 'chain',
         steps: [
-          String.raw`\vec{v}_b(t_a) = \begin{bmatrix}
+          String.raw`\vec{v}_{\text{ball}}(t_a) = \begin{bmatrix}
             \dfrac{d_x}{t_a} \\[8pt]
             \dfrac{d_y}{t_a} \\[8pt]
             \dfrac{d_z + \frac{1}{2} g t_a^{\,2}}{t_a}
@@ -354,7 +407,6 @@ export const DERIVATION: Part[] = [
           String.raw`s_z = \frac{d_z + \frac{1}{2} g t_f^{\,2}}{t_f} - v_{rz}`,
         ],
       },
-      { kind: 'sub', text: 'Finding the velocity-drop compensated hood and turret angles' },
       {
         kind: 'result',
         label: 'Compensated hood angle',

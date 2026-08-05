@@ -110,6 +110,50 @@ const TRACK = [0, 1].flatMap((copy) =>
   </div>
 </section>
 
+<script>
+  /**
+   * Halves the drift's speed while the pointer is over the strip.
+   *
+   * This is script rather than a `:hover` rule for the reason spelled out beside
+   * the `focus-within` pause below: CSS can only offer `animation-duration`, and
+   * changing that mid-flight rescales the animation's progress along with it, so
+   * the strip lurches backwards at the moment of hover. `playbackRate` scales the
+   * rate the animation advances at and leaves its current time alone, which is
+   * the difference between slowing something down and rewinding it.
+   *
+   * The animation is looked up on each event rather than captured once, so the
+   * reduced-motion branch cancelling it — at load or by the user changing the
+   * preference with the page already open — simply yields nothing to slow, and
+   * this quietly does nothing instead of holding a stale handle.
+   */
+  const SLOW = 0.5;
+
+  /* Identified by having no end rather than by name. The drift is the only
+     animation on the track that runs forever, so the test is exact, and it stays
+     exact without depending on `marquee-drift` surviving as a literal string —
+     neither through renaming the keyframes here nor through whatever the scoped
+     style pipeline decides to call them. */
+  const driftOf = (track: HTMLElement) =>
+    track.getAnimations().filter((a) => a.effect?.getTiming().iterations === Infinity);
+
+  document.querySelectorAll<HTMLElement>('.marquee').forEach((marquee) => {
+    const track = marquee.querySelector<HTMLElement>('.marquee__track');
+    if (!track) return;
+
+    const rate = (value: number) => () => {
+      driftOf(track).forEach((drift) => {
+        drift.playbackRate = value;
+      });
+    };
+
+    /* `pointerenter`/`pointerleave` for the same reason MediaSlot uses them: they
+       do not fire for movement between the tiles inside, so crossing a gap in the
+       row cannot make the strip stutter back to full speed. */
+    marquee.addEventListener('pointerenter', rate(SLOW));
+    marquee.addEventListener('pointerleave', rate(1));
+  });
+</script>
+
 <style>
   .more {
     padding-block: var(--section-y);
@@ -259,7 +303,17 @@ const TRACK = [0, 1].flatMap((copy) =>
 
   /* The drift no longer stops under the pointer — a hovered tile still plays its
      clip and fades in its label, but the strip keeps moving under it rather than
-     holding still. `focus-within` keeps the pause for keyboard focus, since a
+     holding still. It does halve its speed, and that is done from the script
+     below rather than here: a `:hover` rule that doubled `animation-duration`
+     would be the obvious CSS for it and is the one thing that cannot work.
+     Duration is not speed. A running animation's progress is its elapsed time
+     over its duration, so doubling the duration at the moment the pointer
+     arrives halves the progress with it, and the strip snaps backwards by up to
+     half its travel — then snaps forward again on the way out. `playbackRate`
+     is the property that means what this wants: it changes how fast the clock
+     runs without touching where the clock has got to.
+
+     `focus-within` below keeps the harder pause for keyboard focus, since a
      tabbed-to tile has no pointer to keep the drift going for it and freezing the
      strip is the only way its clip and label get a chance to be seen at all. */
   .marquee:focus-within .marquee__track {

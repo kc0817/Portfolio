@@ -63,6 +63,15 @@ svg {
   max-width: 100%;
 }
 
+/* KaTeX draws accents and stretchy delimiters as absolutely positioned SVGs sized
+   in em — the arrow over a vector is one of them. Their containing block has no
+   width, so the `max-width: 100%` above resolves to zero and clamps the drawing
+   out of existence: `\vec{v}` renders as a bare `v`. The reset is right for
+   content images and wrong for glyphs, and this is the narrowest way to say so. */
+.katex svg {
+  max-width: none;
+}
+
 input,
 button,
 textarea,

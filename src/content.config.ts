@@ -50,8 +50,11 @@ const projects = defineCollection({
       /** Human-readable, e.g. "Spring 2025" or "2024–2026". Never invented. */
       period: z.string().optional(),
 
-      /** Languages, frameworks, hardware. Rendered as plain text, not badges. */
-      stack: z.array(z.string()).default([]),
+      /** Programming languages used. Rendered as plain text, not badges. */
+      languages: z.array(z.string()).default([]),
+
+      /** Frameworks, libraries, and other tools built with. Rendered as plain text, not badges. */
+      tools: z.array(z.string()).default([]),
 
       /**
        * Verified competitive results only. Anything here is a factual claim

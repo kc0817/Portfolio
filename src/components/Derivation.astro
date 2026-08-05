@@ -3,11 +3,18 @@ import 'katex/dist/katex.min.css';
 import { Image } from 'astro:assets';
 import DerivationBlocks from './DerivationBlocks.astro';
 import Icon from './Icon.astro';
+import Math from './Math.astro';
 import { DERIVATION } from '../lib/ballisticDerivation';
 import { url } from '../lib/site';
 import shootingVariables from '../assets/robotics/shooting-variables-diagram.png';
 import sotmDiagram from '../assets/robotics/sotm-diagram.png';
 import velocityDrop from '../assets/robotics/velocity-drop-diagram.png';
+import shooterControl from '../assets/robotics/shooter-control-diagram.png';
+import turretControl from '../assets/robotics/turret-control-diagram.png';
+import hoodControl from '../assets/robotics/hood-control-diagram.png';
+import shooterSysId from '../assets/robotics/shooter-sysid.png';
+import turretSysId from '../assets/robotics/turret-sysid.png';
+import hoodSysId from '../assets/robotics/hood-sysid.png';
 
 /**
  * The three steps of the solver, each one a heading, a paragraph saying what the
@@ -29,6 +36,45 @@ import velocityDrop from '../assets/robotics/velocity-drop-diagram.png';
  * in `DerivationBlocks`.
  */
 const [step1, step2, step3] = DERIVATION;
+
+/**
+ * Step 3 in three disclosures instead of one, because it is the only step whose
+ * algebra is three separable jobs — derive a polynomial, find its useful root,
+ * substitute that root back — and one fold over all of it asks the reader to
+ * commit to the whole grind or none of it.
+ *
+ * The boundaries are found by heading rather than written as literal indices, so
+ * inserting a line into a section cannot silently move the section break to the
+ * wrong place. A rename can still break it, which is what the throw is for: the
+ * split is structural, and a page that quietly renders the wrong three groups is
+ * worse than a build that stops.
+ */
+const ROOTS_HEAD = 'Finding zeroes of time of flight polynomial';
+const ANGLES_HEAD = 'Plugging the time of flight into the launch vector equations';
+
+const headIndex = (text: string) => {
+  const i = step3.blocks.findIndex((b) => b.kind === 'sub' && b.text === text);
+  if (i === -1) {
+    throw new Error(
+      `Derivation: step 3 has no sub-heading "${text}", so its disclosures cannot be split. ` +
+        'Update the constant in Derivation.astro to match the heading in ballisticDerivation.ts.'
+    );
+  }
+  return i;
+};
+
+const iRoots = headIndex(ROOTS_HEAD);
+const iAngles = headIndex(ANGLES_HEAD);
+
+const STEP3 = {
+  /* a — the symbols beside the plot, then everything up to the quartic. */
+  declared: step3.blocks.slice(0, 4),
+  polynomial: step3.blocks.slice(4, iRoots),
+  /* b — approximating the root and choosing between the arcs it offers. */
+  roots: step3.blocks.slice(iRoots, iAngles),
+  /* c — the chosen flight time put back through the launch vector. */
+  angles: step3.blocks.slice(iAngles),
+};
 
 /**
  * The two clips, as encoded. Both are silent — the audio track is stripped, not
@@ -58,7 +104,148 @@ const CLIPS = {
     width: 720,
     height: 900,
   },
+  /* The odd width is the screen recording's own — the sim window, uncropped. This
+     one is the exception to the note above: it still carries its capture's audio
+     track. Nothing autoplays, so it stays silent until asked. */
+  sim: {
+    src: url('/media/ballistic-advantagescope-sim.mp4'),
+    width: 1954,
+    height: 938,
+  },
 };
+
+/**
+ * Step 5's three mechanisms. Unlike the steps above — each of which carries its
+ * own shape and so is written out — these three are the same panel three times
+ * over: a control-system column and a system-identification column, in that
+ * order. So the copy is data and the markup is written once, which is also what
+ * guarantees the layout cannot shift between selections.
+ *
+ * TODO(Kevin): every `control` and `sysId` string below is scaffolding. Replace
+ * each paragraph with what that mechanism actually runs — the loop, what it runs
+ * on, what it holds against. Both figures in all three panels are the real
+ * pictures now: the block diagram on the left, the fit the constants came out of
+ * on the right.
+ */
+/**
+ * A control-system column is either one paragraph or a run of these: a paragraph,
+ * a display equation, or the symbol key that captions one. Written as a type so
+ * the array literal below does not widen into a single optional-everything shape,
+ * which is what makes `'eq' in part` a real narrowing in the markup.
+ */
+type ControlPart = string | { eq: string } | { note: string };
+
+const SUBSYSTEMS: {
+  id: string;
+  label: string;
+  diagram: ImageMetadata;
+  diagramAlt: string;
+  sysIdImage: ImageMetadata;
+  sysIdAlt: string;
+  control: string | ControlPart[];
+  sysId: string;
+}[] = [
+  {
+    id: 'shooter',
+    label: 'Shooter',
+    diagram: shooterControl,
+    diagramAlt:
+      'Block diagram of the shooter control system. Launch velocity in metres per ' +
+      'second converts to a motor velocity in ticks per second, which splits into a ' +
+      'velocity-and-friction feedforward and a gain-scheduled PID; the two sum into ' +
+      'a voltage for the shooter motors, whose encoder feeds back through a low-pass ' +
+      'filter into the PID.',
+    sysIdImage: shooterSysId,
+    sysIdAlt:
+      'A Desmos logarithmic regression of ball exit speed against commanded motor ' +
+      'velocity. Roughly fifty logged shots cluster in vertical stacks at each swept ' +
+      'velocity from 400 up to 1000 ticks per second, with exit speeds from about 3 ' +
+      'to 8.5 metres per second. The fit is y = −27.32 + 5.133·ln(x), R² = 0.9365.',
+    control:
+      'Like all good things, I started with a PID. Then, to counteract the backEMF ' +
+      'and friction in the motor, I added a feedforward velocity regression. And to ' +
+      'communicate with the physics algorithm, I modeled a launch velocity to motor ' +
+      'velocity conversion (see right). I also applied a ' +
+      'time-invariant low pass filter to remove high frequency sensor noise.',
+    sysId:
+      'This regression relates a given motor velocity (x axis) to the ball’s launch ' +
+      'velocity (y axis). Interestingly, a logarithmic curve best fit this data, ' +
+      'showing that at higher speeds, more energy is lost in the shooter wheel-ball ' +
+      'collision.',
+  },
+  {
+    id: 'turret',
+    label: 'Turret',
+    diagram: turretControl,
+    diagramAlt:
+      'Block diagram of the turret control system. Target angle runs through a ' +
+      'trapezoidal motion profile into a velocity-and-friction feedforward, and ' +
+      'separately into a clamped PID; robot acceleration drives an external-torque ' +
+      'mitigation term. All three sum into a voltage for the turret motor, whose ' +
+      'encoder feeds back into the PID.',
+    sysIdImage: turretSysId,
+    sysIdAlt:
+      'A Desmos linear regression from the turret velocity sweep: five measured ' +
+      'points rising steadily from (0.6, 2) to (2.5, 4), fitted by ' +
+      'y = 1.0788x + 1.317 with R² = 0.9925.',
+    /* The one panel whose copy is not a single paragraph: it carries two equations
+       and a symbol list, so it is written as parts rather than as a string. */
+    control: [
+      'Similarly to the shooter, I also started with just a PID. Then I added a ' +
+        'distance-based trapezoidal motion profiler using this equation:',
+      { eq: 'v_f^2 - v_i^2 = 2ad' },
+      'The output of the motion profiler is fed into a feedforward velocity ' +
+        'regression, similar to that in the shooter (see right). And finally, because ' +
+        'the shooter’s center of mass is not ' +
+        'aligned with the turret’s axis of rotation, any robot acceleration will exert ' +
+        'a torque on the turret. So I countered the external torque with this physics ' +
+        'model:',
+      { eq: 'V \\mathrel{-}= k_T \\left( \\vec{a}_{\\text{robot}} \\times \\vec{r}_{\\text{turret}} \\right)' },
+      {
+        /* `$...$` spans are typeset, the same convention the derivation's own prose
+           blocks use — so the symbols in the key are the glyphs from the equation
+           above it rather than ASCII approximations of them. */
+        note:
+          '$V$ = applied voltage, $k_T$ = a tunable constant, ' +
+          '$\\vec{a}_{\\text{robot}}$ = robot acceleration, ' +
+          '$\\vec{r}_{\\text{turret}}$ = turret axis relative to robot axis',
+      },
+    ],
+    sysId:
+      'Below is the feedforward turret velocity regression. The x axis is angular ' +
+      'velocity (rad/s), and the y axis is applied voltage. The slope corresponds to ' +
+      'kV and intercept corresponds to kS.',
+  },
+  {
+    id: 'hood',
+    label: 'Hood',
+    diagram: hoodControl,
+    diagramAlt:
+      'Block diagram of the hood control system. Target angle feeds a gravity ' +
+      'feedforward and a PID in parallel; the two sum into a voltage for the hood ' +
+      'servos, whose encoder feeds back into the PID.',
+    sysIdImage: hoodSysId,
+    sysIdAlt:
+      'A Desmos linear regression tying the hood’s encoder reading to its measured ' +
+      'angle: five points falling from (518, 71 degrees) to (614, 35 degrees), fitted ' +
+      'by y = −0.3738x + 263.75 with R² = 0.9973.',
+    control: [
+      'The hood control system is pretty simple; a PID with gravity feedforward modeled by',
+      /* `\mathrel{{+}{=}}` and not `\mathrel{+}=`: the braced group makes the two
+         glyphs one relation, so they set tight as the `+=` operator rather than
+         with relation spacing opening a gap between them. */
+      { eq: String.raw`V \mathrel{{+}{=}} k_G \cos\theta` },
+      {
+        note:
+          '$V$ = applied voltage, $k_G$ = tunable constant, ' +
+          '$\\theta$ = hood angle from horizontal',
+      },
+    ],
+    sysId:
+      'This regression maps hood encoder values to the actual angle from the ' +
+      'horizontal. The x axis is encoders, and the y axis is angle (degrees).',
+  },
+];
 ---
 
 <div class="wrap deriv">
@@ -79,7 +266,7 @@ const CLIPS = {
             call the impact angle).
           </strong>{' '}
           Using these 3 pieces of data, one can calculate the launch vector of the
-          ball at any given robot position (see derivation below).
+          ball at any given robot position.
         </p>
       </div>
 
@@ -111,7 +298,7 @@ const CLIPS = {
           algebra uses, so it is only of use to a reader who has opened the
           algebra. Folding it away with them is the honest pairing. */}
       <div class="fold__body">
-        <div class="decl decl--wide">
+        <div class="decl">
           <div class="decl__text">
             <DerivationBlocks blocks={step1.blocks.slice(0, 1)} />
           </div>
@@ -119,20 +306,22 @@ const CLIPS = {
             <Image
               src={shootingVariables}
               alt="A side view of the shooter on the robot with the trajectory drawn as an arc to the goal. The exit velocity v leaves at hood angle θ above horizontal, the turret angle φ opens off the robot's heading across the horizontal distance d, and the impact angle i is marked at the ball where it meets the goal."
-              widths={[416, 832]}
-              sizes="(min-width: 52rem) 26rem, 90vw"
+              widths={[448, 896]}
+              sizes="(min-width: 52rem) 28rem, 90vw"
               class="step__img step__img--plate"
             />
           </figure>
         </div>
-        <DerivationBlocks blocks={step1.blocks.slice(1)} />
+        <div class="fold__math">
+          <DerivationBlocks blocks={step1.blocks.slice(1)} />
+        </div>
       </div>
     </details>
   </section>
 
   {/* ---- 2 --------------------------------------------------------------- */}
   <section class="step">
-    <div class="step__row">
+    <div class="step__row step__row--flip">
       <div class="step__text">
         <h2 class="step__title">
           <span class="step__n">{step2.n}</span>
@@ -145,8 +334,7 @@ const CLIPS = {
           subtraction and offset the previous 3D launch vector by the velocity at
           the ball’s exit position. Note: because the ball’s launch position is not
           guaranteed to be aligned with the robot’s axis of rotation, we also need
-          to account for the tangential velocity created by rotation (see
-          derivation below).
+          to account for the tangential velocity created by rotation.
         </p>
       </div>
 
@@ -174,21 +362,25 @@ const CLIPS = {
         <span class="fold__label fold__label--open">Hide the math</span>
       </summary>
       <div class="fold__body">
+        {/* All of step 2 runs beside the diagram, not just its symbol list: the
+            whole step is a definition, a cross product, and a two-line vector
+            subtraction — narrow enough to sit in the text column, and short enough
+            that putting only the symbols up here left the diagram's own height as
+            an empty gap with the algebra pushed below it. */}
         <div class="decl">
           <div class="decl__text">
-            <DerivationBlocks blocks={step2.blocks.slice(0, 1)} />
+            <DerivationBlocks blocks={step2.blocks} />
           </div>
           <figure class="decl__figure">
             <Image
               src={sotmDiagram}
               alt="A 3D vector diagram. The blue vector V_ball is the launch vector the ball needs; the red vector V_robot is the robot's own velocity along the floor, and its negative is added to the tip of V_ball; the purple vector V_adjusted is the result the shooter is actually commanded to."
-              widths={[320, 610]}
-              sizes="(min-width: 52rem) 20rem, 90vw"
+              widths={[448, 610]}
+              sizes="(min-width: 52rem) 28rem, 90vw"
               class="step__img step__img--plate"
             />
           </figure>
         </div>
-        <DerivationBlocks blocks={step2.blocks.slice(1)} />
       </div>
     </details>
   </section>
@@ -212,12 +404,11 @@ const CLIPS = {
         <p class="step__lead">
           To mitigate this problem, we can alter our hood angle — changing the arc
           of the trajectory — to compensate for the lower exit speed; and we can
-          also alter our turret angle to ensure that we can still shoot on the move
-          (see derivation below).
+          also alter our turret angle to ensure that we can still shoot on the move.
         </p>
       </div>
 
-      <figure class="step__figure">
+      <figure class="step__figure step__figure--portrait">
         <video
           class="step__video"
           src={CLIPS.hood.src}
@@ -232,32 +423,206 @@ const CLIPS = {
       </figure>
     </div>
 
+    {/* Three disclosures rather than one, each naming its own job. Steps 1 and 2
+        say "Show the math" because there is one thing behind the fold and the
+        summary only has to offer it; here the summary has to say which third of the
+        grind it opens, so the label is the section title and the chevron carries the
+        state on its own. */}
     <details class="fold">
       <summary class="fold__summary">
         {/* The class is on a wrapper, not on `Icon` itself: a scoped style in
             this file cannot reach the root element of a child component. */}
         <span class="fold__chevron"><Icon name="chevron-right" size={18} /></span>
-        <span class="fold__label fold__label--shut">Show the math</span>
-        <span class="fold__label fold__label--open">Hide the math</span>
+        <span class="fold__label">a: Deriving time of flight polynomial</span>
       </summary>
       <div class="fold__body">
+        {/* Step 3 cannot give the diagram all of its algebra the way step 2 does —
+            the component table and the S² expansion below need the full measure —
+            so the split is at the last narrow block: the symbols, the line that
+            introduces them, and the vector identity all run up beside the plot,
+            which is about its height, and the wide work starts under it. */}
         <div class="decl">
           <div class="decl__text">
-            <DerivationBlocks blocks={step3.blocks.slice(0, 1)} />
+            <DerivationBlocks blocks={STEP3.declared} />
           </div>
           <figure class="decl__figure">
             <Image
               src={velocityDrop}
               alt="A telemetry plot of shooter wheel velocity over time. Three shots are marked as shaded bands; the wheel is running steadily before the first, and a labelled velocity drop takes it well below that level across the three shots before it recovers."
-              widths={[320, 640]}
-              sizes="(min-width: 52rem) 20rem, 90vw"
+              widths={[448, 721]}
+              sizes="(min-width: 52rem) 28rem, 90vw"
               class="step__img step__img--plate"
             />
           </figure>
         </div>
-        <DerivationBlocks blocks={step3.blocks.slice(1)} />
+        {/* Uncapped, because the S² expansion is the widest equation on the page and
+            at 54rem it was the one strip on a desktop that still had to scroll. The
+            page's own measure is the only cap it gets. */}
+        <div class="fold__math fold__math--wide">
+          <DerivationBlocks blocks={STEP3.polynomial} />
+        </div>
       </div>
     </details>
+
+    <details class="fold">
+      <summary class="fold__summary">
+        <span class="fold__chevron"><Icon name="chevron-right" size={18} /></span>
+        <span class="fold__label">b: Approximating the “best” flight time</span>
+      </summary>
+      <div class="fold__body">
+        <div class="fold__math fold__math--wide fold__math--wide-prose">
+          <DerivationBlocks blocks={STEP3.roots} />
+        </div>
+      </div>
+    </details>
+
+    <details class="fold">
+      <summary class="fold__summary">
+        <span class="fold__chevron"><Icon name="chevron-right" size={18} /></span>
+        <span class="fold__label">c: Calculating compensated hood and turret angles</span>
+      </summary>
+      <div class="fold__body">
+        <div class="fold__math">
+          <DerivationBlocks blocks={STEP3.angles} />
+        </div>
+      </div>
+    </details>
+  </section>
+
+  {/* ---- 4 --------------------------------------------------------------- */}
+  {/* No disclosure on this one: the simulator is a tool the solver was tested
+      in, not another leg of the derivation, so there is no algebra to fold. */}
+  <section class="step">
+    <div class="step__row step__row--flip">
+      <div class="step__text">
+        <h2 class="step__title">
+          <span class="step__n">4</span>
+          Custom AdvantageScope Sim
+        </h2>
+
+        <p class="step__lead">
+          The purpose of this simulation is to visualize 3D poses and trajectories,
+          allowing me to extensively test my physics equations as well as robot
+          behavior before deploying to the robot.
+        </p>
+
+        <ul class="step__list">
+          <li>
+            To visualize the shot arcs, I converted the launch vector into a
+            parabolic equation, then generated points along the equation and drew
+            lines connecting them.
+          </li>
+          <li>
+            To model the balls, I implemented Euler’s method and applied gravity to
+            simulate a projectile.
+          </li>
+        </ul>
+      </div>
+
+      <figure class="step__figure">
+        <video
+          class="step__video step__video--crop-right"
+          src={CLIPS.sim.src}
+          width={CLIPS.sim.width}
+          height={CLIPS.sim.height}
+          aria-label="The AdvantageScope simulation drawing the solver's shot arc and a ball flying along it into the goal."
+          controls
+          playsinline
+          preload="metadata"
+          disablepictureinpicture></video>
+      </figure>
+    </div>
+  </section>
+
+  {/* ---- 5 --------------------------------------------------------------- */}
+  {/* The one step laid out full width rather than prose-beside-media: it is not
+      one argument with one picture, it is the same pair of columns read three
+      times over, and the picker is the thing that has to be read across the
+      whole measure. */}
+  <section class="step">
+    <h2 class="step__title">
+      <span class="step__n">5</span>
+      Control System Design &amp; Testing
+    </h2>
+
+    <p class="step__lead step__lead--full">
+      For both FTC and FRC, our shooting system consists of 3 hardware components
+      allowing us to accurately launch balls.
+    </p>
+
+    <div class="subsys">
+      {/* A radio group and not scripted tabs, for the same reason the disclosures
+          above are `<details>`: with no JavaScript the picker still works, the
+          checked state is the control's own rather than something a script has to
+          keep in sync, and arrow-key navigation between the three comes free. */}
+      <fieldset class="subsys__pick">
+        <legend class="visually-hidden">Choose a mechanism</legend>
+        {
+          SUBSYSTEMS.map((sub, i) => (
+            <label class="pick">
+              <input type="radio" name="subsystem" value={sub.id} checked={i === 0} />
+              {sub.label}
+            </label>
+          ))
+        }
+      </fieldset>
+
+      {
+        SUBSYSTEMS.map((sub) => (
+          <div class="panel" data-subsys={sub.id}>
+            <div class="panel__col">
+              <h3 class="panel__title">Control System</h3>
+              {/* A panel's control copy is either one paragraph or a run of parts —
+                  paragraphs, display equations, and a symbol key. One string is
+                  normalised to a one-part run so the markup has a single shape. */}
+              {(Array.isArray(sub.control) ? sub.control : [sub.control]).map((part) =>
+                typeof part === 'string' ? (
+                  <p class="panel__body">{part}</p>
+                ) : 'eq' in part ? (
+                  <div class="panel__eq">
+                    <Math tex={part.eq} display />
+                  </div>
+                ) : (
+                  <p class="panel__body panel__note">
+                    {part.note
+                      .split('$')
+                      .map((piece, i) => (i % 2 === 1 ? <Math tex={piece} /> : piece))}
+                  </p>
+                )
+              )}
+              {/* The block diagrams are drawn on white, so they take the same
+                  hairline plate the step diagrams above do. Half the measure at
+                  the wide layout, full at the narrow one. */}
+              <figure class="panel__figure">
+                <Image
+                  src={sub.diagram}
+                  alt={sub.diagramAlt}
+                  widths={[440, 880]}
+                  sizes="(min-width: 52rem) 27rem, 90vw"
+                  class="step__img step__img--plate"
+                />
+              </figure>
+            </div>
+
+            <div class="panel__col">
+              <h3 class="panel__title">System Identification</h3>
+              <p class="panel__body">{sub.sysId}</p>
+              {/* The regressions are screenshots off a white Desmos ground, so they
+                  take the same hairline plate the block diagrams do. */}
+              <figure class="panel__figure">
+                <Image
+                  src={sub.sysIdImage}
+                  alt={sub.sysIdAlt}
+                  widths={[440, 880]}
+                  sizes="(min-width: 52rem) 27rem, 90vw"
+                  class="step__img step__img--plate"
+                />
+              </figure>
+            </div>
+          </div>
+        ))
+      }
+    </div>
   </section>
 </div>
 
@@ -298,6 +663,25 @@ const CLIPS = {
     .step__figure {
       width: 100%;
     }
+
+    /* Step 2 mirrors the split — clip left, prose right — so the three steps do
+       not read as one unbroken column of text with a strip of video pinned
+       alongside it. Done by placement rather than by reordering the markup: the
+       heading still comes first in the DOM, which is the order the row stacks in
+       below this breakpoint and the order a screen reader takes it in. */
+    .step__row--flip {
+      grid-template-columns: 28rem minmax(0, 1fr);
+    }
+
+    .step__row--flip .step__figure {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .step__row--flip .step__text {
+      grid-column: 2;
+      grid-row: 1;
+    }
   }
 
   .step__title {
@@ -331,6 +715,21 @@ const CLIPS = {
     margin-top: var(--s-4);
   }
 
+  /* Two implementation notes under step 4's lead. Markers hang in the margin so
+     the text stays flush with the paragraph above it. */
+  .step__list {
+    margin: var(--s-4) 0 0;
+    padding-left: var(--s-5);
+    display: grid;
+    gap: var(--s-3);
+    color: var(--ink-secondary);
+    max-width: 62ch;
+  }
+
+  .step__list li::marker {
+    color: var(--ink-tertiary);
+  }
+
   /* No fixed box and no `cover` anywhere in here. Every picture on this page is
      either a labelled diagram or footage of the robot, and cropping one to a shape
      the layout preferred would cut a variable name or a goal out of it. They keep
@@ -348,11 +747,23 @@ const CLIPS = {
     width: min(28rem, 100%);
   }
 
+  /* Step 3's clip is the one portrait encode on the page: at the column's full
+     28rem it stands 35rem tall, half again the height of the prose beside it, and
+     the row ends in a long empty gutter under the text. Narrowing it to 18rem
+     brings it back to roughly the copy's own height. It keeps the column's left
+     edge — that is the line the three clips are read against — so the odd width
+     shows only on the right, where a portrait frame is expected to stop short. */
+  @media (min-width: 52rem) {
+    .step__figure--portrait {
+      width: min(18rem, 100%);
+    }
+  }
+
   /* ---- Declarations and their diagram ------------------------------------ */
 
   /* The symbol list on the left, the diagram that labels those symbols on the
-     right. Stacked below the breakpoint, where 20rem of diagram beside a
-     definition list would leave neither one readable. */
+     right. Stacked below the breakpoint, where a diagram beside a definition list
+     would leave neither one readable. */
   .decl {
     display: grid;
     gap: var(--s-5);
@@ -360,22 +771,34 @@ const CLIPS = {
   }
 
   @media (min-width: 52rem) {
+    /* Deliberately the same two columns and the same gap as `.step__row`, so each
+       diagram lands in the same column as the clip it was opened from: one media
+       edge down the page rather than a diagram inset from the clip above it by an
+       arbitrary amount. It is why the 54rem math measure moved off `.fold` and onto
+       `.fold__math` — this row has to be as wide as the step row to line up with
+       it, and only the equations wanted the narrower cap. */
     .decl {
-      grid-template-columns: minmax(0, 1fr) 20rem;
+      grid-template-columns: minmax(0, 1fr) 28rem;
       align-items: start;
-      gap: var(--s-7);
-    }
-
-    /* Step 1's diagram is nearly three times as wide as it is tall — at 20rem it
-       would be a 6rem-tall strip with type in it. */
-    .decl--wide {
-      grid-template-columns: minmax(0, 1fr) 26rem;
+      gap: var(--s-9);
     }
   }
 
-  /* The list already carries its own bottom margin; inside the row that would
-     push the two columns out of alignment. */
-  .decl__text :global(.defs) {
+  /* The same measure the clips take, which is what keeps a diagram the width of
+     the clip it belongs to once the row stacks as well as when it is a column: in
+     the grid this is the column's own 28rem, and below it the cap the clip has. */
+  .decl__figure {
+    width: min(28rem, 100%);
+  }
+
+  /* Steps 2 and 3 carry worked algebra in this column and not only the symbol
+     list, so the spacing between blocks is `DerivationBlocks`' own; its
+     `:last-child` rules already drop the trailing margin, which is all the row
+     needed the old blanket override here for. */
+
+  /* Where the row is the whole disclosure — step 2 — its bottom margin would
+     double up with the section's own space below. */
+  .decl:last-child {
     margin-bottom: 0;
   }
 
@@ -401,13 +824,43 @@ const CLIPS = {
     background: var(--ground-inverse);
   }
 
+  /* Step 4's capture is 1954x938 with the right ~11% empty field — white carpet
+     tapering out to the frame's edge, plus a one-pixel window border. Cropping it
+     here rather than in the encode: the box is given the cropped ratio while the
+     clip still fills it, so at the same column width the sim renders about 13%
+     larger and the dead margin is what leaves. `left` and not the default centre
+     is the whole point — only the right side goes. */
+  .step__video--crop-right {
+    aspect-ratio: 1730 / 938;
+    height: auto;
+    object-fit: cover;
+    object-position: left center;
+  }
+
+  /* Holds the space a clip will take, at the 16:9 the others are cut to, so the
+     row's proportions are already right when the encode lands. Dashed rather than
+     hairline: this is scaffolding and should read as unfinished, not as a frame. */
+  .step__placeholder {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    background: var(--ground-sunken);
+    border: 1px dashed var(--rule);
+    border-radius: var(--radius-md);
+    color: var(--ink-tertiary);
+  }
+
   /* ---- The disclosure ---------------------------------------------------- */
 
   .fold {
     margin-top: var(--s-6);
-    /* Wider than the prose beside it: the quartic and the S² expansion are
-       genuinely wide, and every rem here is a rem they do not have to scroll. */
-    max-width: 54rem;
+  }
+
+  /* Step 3's three sit closer to each other than the first one sits to the prose
+     above it: they are one set of choices, and a full step's worth of space between
+     them would read as three unrelated controls. */
+  .fold + .fold {
+    margin-top: var(--s-4);
   }
 
   .fold__summary {
@@ -478,5 +931,184 @@ const CLIPS = {
 
   .fold__body {
     padding-top: var(--s-6);
+  }
+
+  /* Wider than the prose above it: the quartic and the S² expansion are genuinely
+     wide, and every rem here is a rem they do not have to scroll. Capped on the
+     equations alone — the declarations row above them spans the full width so its
+     diagram can sit under the clip. */
+  .fold__math {
+    max-width: 54rem;
+  }
+
+  /* Off, where the work inside is wider than 54rem can hold. */
+  .fold__math--wide {
+    max-width: none;
+  }
+
+  /* Step 3b's prose runs to the page's full width by request. Every other paragraph
+     on the site is capped near 62ch, which is where a line stops being comfortable
+     to track back from — so this is a deliberate exception, not the new default. */
+  .fold__math--wide-prose :global(.prose) {
+    max-width: none;
+  }
+
+  /* ---- 5: the mechanism picker and its panels ---------------------------- */
+
+  /* Step 5's lead runs the page's full width by request — same deliberate
+     exception as step 3b's prose above, and for the same reason: it is a single
+     short sentence introducing what follows, not a paragraph to be tracked back
+     through, so the 62ch cap buys nothing and leaves the picker under it looking
+     unrelated to the line that names it. */
+  .step__lead--full {
+    max-width: none;
+  }
+
+  .subsys {
+    margin-top: var(--s-6);
+  }
+
+  /* Three equal cells across the whole measure: the three mechanisms are one
+     system, and sizing them to their labels would make "Shooter" read as the
+     important one. */
+  .subsys__pick {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px;
+    margin: 0;
+    padding: 2px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--ground-sunken);
+  }
+
+  .pick {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: var(--s-3) var(--s-4);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    /* The page's tracked mono label, the same one the disclosure summaries take:
+       this is a control, not reported content. */
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out);
+  }
+
+  /* The input covers its own cell so the whole cell is the hit area. Transparent
+     rather than `display: none` — a hidden input takes no focus, and the focus
+     ring below is drawn from it. */
+  .pick input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .pick:hover {
+    color: var(--ink);
+  }
+
+  /* Raised and inked, against the sunken track behind it: the selected cell reads
+     as the one in front rather than as the one that is a different colour. Same
+     `:has(input:checked)` shape the type lab's segmented control uses. */
+  .pick:has(input:checked) {
+    background: var(--ground-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pick:has(input:focus-visible) {
+    outline: 2px solid var(--accent-blue-dark);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pick {
+      transition: none;
+    }
+  }
+
+  /* All three panels are in the DOM and one is shown. Swapping whole panels
+     rather than their contents is what holds the two columns still between
+     selections — the layout is the constant here, and only the copy and the
+     plots change. The hidden two are `display: none`, so they are out of the
+     accessibility tree as well as off the page.
+
+     Written out per id rather than generated: there are three of them, and a
+     rule you can read beats a selector you have to work out. */
+  .panel {
+    display: none;
+    gap: var(--s-6);
+    margin-top: var(--s-7);
+  }
+
+  .subsys:has(input[value='shooter']:checked) .panel[data-subsys='shooter'],
+  .subsys:has(input[value='turret']:checked) .panel[data-subsys='turret'],
+  .subsys:has(input[value='hood']:checked) .panel[data-subsys='hood'] {
+    display: grid;
+  }
+
+  /* Two equal columns, not the 1fr/28rem of the steps above: neither column is
+     the media column here — each one is a heading, a paragraph and a picture, and
+     they are read against each other. Stacked below the breakpoint, where two
+     halves of this measure would leave both paragraphs too narrow to track. */
+  @media (min-width: 52rem) {
+    .panel {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+      gap: var(--s-9);
+    }
+  }
+
+  /* The weight `DerivationBlocks` gives its own sub-headings, so a heading inside
+     a panel and a heading inside a disclosure are the same object. */
+  .panel__title {
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-bottom: var(--s-4);
+  }
+
+  .panel__body {
+    color: var(--ink-secondary);
+    max-width: 62ch;
+  }
+
+  /* A run of parts, not one paragraph: the paragraphs need space between them,
+     which a single-paragraph panel must not pay for. */
+  .panel__body + .panel__body {
+    margin-top: var(--s-4);
+  }
+
+  /* An equation interrupting the prose takes the same left hairline a chain of
+     algebra does above, so the two read as the same kind of object. */
+  .panel__eq {
+    margin: var(--s-4) 0;
+    padding-left: var(--s-5);
+    border-left: 1px solid var(--rule);
+  }
+
+  /* The symbol key under an equation — a caption to it, so it sits tighter and
+     one step quieter than the prose it follows. */
+  .panel__note {
+    margin-top: calc(-1 * var(--s-1));
+    font-size: var(--text-sm);
+    color: var(--ink-tertiary);
+  }
+
+  .panel__eq + .panel__note {
+    margin-top: 0;
+  }
+
+  .panel__figure {
+    margin: var(--s-5) 0 0;
   }
 </style>
