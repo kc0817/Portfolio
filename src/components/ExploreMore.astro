@@ -4,9 +4,9 @@ import { MARQUEE } from '../lib/projectMedia';
 import { SITE } from '../lib/site';
 
 /**
- * The offcuts. The portfolio above is six projects because Kevin cut it to six; this
- * section is where the page admits that, points at the two places the rest actually
- * lives, and shows a strip of it going past.
+ * The offcuts. The portfolio above is three projects because Kevin cut it to three;
+ * this section is where the page admits that, points at the two places the rest
+ * actually lives, and shows a strip of it going past.
  *
  * The strip is a marquee rather than a carousel with controls, and that is a decision
  * about what it is for. Controls imply the contents are worth navigating, item by
@@ -88,17 +88,13 @@ const TRACK = [0, 1].flatMap((copy) =>
           >
             <div class="marquee__tile">
               <MediaSlot
-                video={item?.src ? { src: item.src, poster: item.poster } : null}
+                video={item?.src && item.poster ? { src: item.src, poster: item.poster } : null}
                 image={item && !item.src && item.poster ? item.poster : null}
                 playOn="hover"
                 preload="none"
                 alt={item?.alt ?? ''}
                 iconSize={26}
               />
-              {/* A reserved slot with no footage yet: the placeholder shows through
-                  underneath, and this banner is what tells it apart from a slot that
-                  is simply empty. */}
-              {item?.inProgress && <div class="marquee__banner">In Progress</div>}
             </div>
             {/* Rendered even for an empty slot, so every item reserves the same
                 height and filling a `null` later cannot change the strip's size. */}
@@ -236,29 +232,11 @@ const TRACK = [0, 1].flatMap((copy) =>
      What answers the pointer now is the drift stopping, the clip starting, and the
      label arriving — all three of which are the content responding, not the layout. */
   .marquee__tile {
-    position: relative;
     aspect-ratio: 1 / 1;
     border-radius: var(--radius-md);
     border: 1px solid var(--rule);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-  }
-
-  /* A reserved slot with no footage yet. Laid across the placeholder's own
-     middle rather than pinned to an edge, so it reads as a stamp over the
-     field instead of a fourth border on it. */
-  .marquee__banner {
-    position: absolute;
-    inset-inline: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    padding-block: var(--s-2);
-    background: var(--accent-orange, #d9730d);
-    color: #fff;
-    font-size: var(--text-sm);
-    font-weight: 600;
-    text-align: center;
-    letter-spacing: 0.02em;
   }
 
   /* ---- Hover label ----------------------------------------------------- */

@@ -61,12 +61,14 @@ const video = cardOf(project.id);
      padding. Holding the cell still is the whole point: the frame inside it is
      free to change width without the grid ever relaying out. */
   /* A query container, so the title and the band below size themselves against the
-     card rather than the viewport. The same component is 560px wide in the two-up
-     robotics row and 288px in the three-up math row, and no single fixed title size
-     serves both: at `--text-lg` every math title wrapped to two lines, which pushed
-     the scrim band to 45% of a short card. Sizing against the viewport would not
-     have fixed it either — the two rows are that different at the *same* viewport
-     width. The card is the thing that changes, so the card is the container. */
+     card rather than the viewport. It earned its keep against the three-up Math
+     Explorations row, since retired: the same component was 560px wide in the two-up
+     robotics row and 288px there, and no single fixed title size served both — at
+     `--text-lg` every Math title wrapped to two lines, which pushed the scrim band to
+     45% of a short card. Sizing against the viewport would not have fixed it either,
+     because the two rows were that different at the *same* viewport width. Every row
+     is two-up now, so nothing currently exercises the range; the container stays
+     because the card, not the viewport, is still the thing a title has to fit. */
   .card {
     position: relative;
     display: block;

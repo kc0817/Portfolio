@@ -26,10 +26,6 @@ export const PORTFOLIO_ROWS: readonly PortfolioRow[] = [
     category: 'research',
     ids: ['autoomr'],
   },
-  {
-    category: 'math',
-    ids: ['rubiks-cube-3d', 'procedural-spider', 'physics-collision-engine'],
-  },
 ];
 
 /** Every project id, in the flattened order the home page lays them out. */

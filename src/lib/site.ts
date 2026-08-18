@@ -34,7 +34,7 @@ export const SECTIONS = [
  * Division metadata. `blurb` is the one line that introduces a division, and it
  * describes what the work has in common rather than selling it.
  *
- * These used to head a page each. With the topic pages gone they head the three
+ * These used to head a page each. With the topic pages gone they head the two
  * sections of the home page's portfolio instead — which makes them the only place
  * this copy exists, so nothing here is surplus: the robotics blurb in particular
  * carries the credential line (#1 in PA, six software awards) that no project card
@@ -52,19 +52,13 @@ export const CATEGORY_META: Record<
     label: 'FIRST Robotics',
     short: 'Robotics',
     blurb:
-      'From 2024-2026, I programmed custom robots in both FTC and FRC as the lead software developer in the BrainSTEM organization. By adopting industry standard robotics algorithms, BrainSTEM has been ranked #1 in PA for autonomous navigation while winning 6 software-specific awards.',
+      'From 2024-2026, I programmed custom robots in both FTC and FRC as the lead software developer in the BrainSTEM organization. By adopting industry standard robotics algorithms, BrainSTEM is ranked #1 in PA for autonomous navigation while winning 6 software-specific awards.',
   },
   research: {
     label: 'Research',
     short: 'Research',
     blurb:
-      'Computational work on real research problems, where the software has to hold up to measurement rather than just run.',
-  },
-  math: {
-    label: 'Math Explorations',
-    short: 'Math',
-    blurb:
-      'Engines and simulations built from the mathematics up, in an environment that supplied no graphics, physics, or interface libraries to lean on.',
+      'For summer 2024, I was a student researcher at UPMC Hillman Academy and returned summer 2025 to work with Dr. Shaohua Pi (my mentor), and Justin Chen (my lab partner) in the University of Pittsburgh Department of Ophthalmology.',
   },
 };
 

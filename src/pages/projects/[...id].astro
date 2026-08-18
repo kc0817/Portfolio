@@ -10,7 +10,7 @@ import { PORTFOLIO_ORDER } from '../../lib/portfolioRows';
  * exception: research had a single project, so `/research` rendered it directly and
  * this route skipped the slug to avoid two URLs for one page. The division pages are
  * gone, so that exception has nothing left to be an exception to — AutoOMR is now a
- * project page like the other five, reached from its card in the portfolio's Research
+ * project page like the other two, reached from its card in the portfolio's Research
  * row.
  */
 // Not annotated `: GetStaticPaths` on purpose — that widens the return type to the
@@ -20,7 +20,7 @@ export const getStaticPaths = async () => {
   const all = await getCollection('projects', ({ data }) => !data.draft);
 
   // One sequence across every division, in the same order the home page lays
-  // its rows out — robotics, then research, then math. So "next" from the last
+  // its rows out — robotics, then research. So "next" from the last
   // project in a row carries into the first project of the next row, rather
   // than dead-ending at the end of its own category. A project absent from
   // `PORTFOLIO_ORDER` (published but not yet slotted into a row) falls to the

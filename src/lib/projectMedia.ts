@@ -165,79 +165,6 @@ export const PROJECT_MEDIA: Record<string, ProjectMedia> = {
       'Integration trial run - testing neural network framerate and accuracy in classifying OMR',
   },
 
-  /**
-   * Captured square at 1080x1080 with pillars; the picture box is x 36..1043,
-   * y 6..1072. The card is 992x744 at (44, 325), scaled to 960x720 — the largest
-   * exact 4:3 that clears the "Above: aerial view of spider" caption at the top and
-   * still holds the floor line and the whole vertical range the spider walks through.
-   * The trade is the aerial-view inset in the source's top-left corner, which the
-   * card cannot fit and the page still shows.
-   *
-   * The cut runs the source's full 7.7s from t=0. It used to start 2.6s in, because
-   * at t=0 the spider sits low in the bottom-right where the title scrim clips it and
-   * a resting card reads as an empty white scene — but skipping the opening also
-   * skipped the approach to the terrain, which is the part the clip is about.
-   */
-  'procedural-spider': {
-    card: cut('procedural-spider', 960, 720),
-    hero: still('procedural-spider', 1080, 1080, {
-      left: 39,
-      top: 9,
-      width: 1002,
-      height: 1061,
-    }),
-    alt: 'A wireframe spider crossing stepped terrain, its legs re-planting one at a time as the ground height changes under it.',
-    caption:
-      'Inverse-kinematic legs picking their own footholds as the spider crosses uneven terrain',
-  },
-
-  /**
-   * The 1280x720 capture's picture is a near-square 708x720 window, so 4:3 had
-   * to come out of the height rather than the width. Measured against the frame:
-   * the axis legend's box ends at y=144, the button row starts at y=616, and the
-   * cube's own bounding box is y=148..587. A 624x468 window at y=146 is the
-   * largest exact 4:3 that clears both pieces of chrome, and the cube fits inside
-   * it whole with two pixels to spare at each end. Leaving a half-cut legend at
-   * the top edge would have read as a rendering fault rather than a crop.
-   */
-  'rubiks-cube-3d': {
-    card: cut('rubiks-cube-3d', 624, 468),
-    hero: still('rubiks-cube-3d', 1280, 720, {
-      left: 286,
-      top: 0,
-      width: 708,
-      height: 720,
-    }),
-    alt: 'A 3D Rubik’s cube built from scratch, rotating about its coordinate axes.',
-    caption: 'A Rubik’s cube demo rendered with a custom 3D graphics engine',
-  },
-
-  /**
-   * The 1628x1076 capture is one app window with chrome on three sides: the energy
-   * charts and their "Rescale Charts" button top-left, a live telemetry readout
-   * top-right from x=1220, and a full-width button bar from y=985. No 4:3 window
-   * holds all of it — at full height the widest 4:3 is 1435, which slices both the
-   * readout and the last button in the bar.
-   *
-   * So the cut drops both: 1208x906 at the origin, scaled to 960x720. It is the
-   * largest exact 4:3 that ends before the readout begins, and its bottom edge
-   * clears the button bar entirely rather than showing a row of half-buttons. What
-   * survives is what the project is about — all three energy charts with their KE /
-   * GE / Sum bars, both circles, and the platform they land on entering at the
-   * bottom, where the title scrim sits over it anyway.
-   *
-   * Runs the source's full 8.8s from t=0, so the poster is genuinely frame 0 and the
-   * card rests on the moment the clip resumes from. The chart panel switches from
-   * energy to momentum partway through, which is the demo showing its own second
-   * half rather than a cut worth avoiding.
-   */
-  'physics-collision-engine': {
-    card: cut('physics-collision-engine', 960, 720),
-    hero: still('physics-collision-engine', 1628, 1076),
-    alt: 'Two circles falling and colliding in a 2D rigid-body sim, with live energy charts tracking kinetic and potential energy either side of the impact.',
-    caption:
-      'Rigid-body collisions under Separating Axis Theorem, with energy and momentum graphed live',
-  },
 };
 
 /**
@@ -255,8 +182,8 @@ export const PROJECT_MEDIA: Record<string, ProjectMedia> = {
  * seven captions drifting past would be a list, and this section is explicitly not
  * offering a list to read.
  *
- * To fill a slot, drop `public/media/more-<name>-card.mp4` plus a `-card.jpg` poster
- * cut from its frame 0, then replace a `null` below:
+ * To add a slot, drop `public/media/more-<name>-card.mp4` plus a `-card.jpg` poster
+ * cut from its frame 0, then add a line below:
  *
  *     moreCut('kevmos', 'Kevmos', 'Kevmos in play, the ghosts closing in on two sides.'),
  *
@@ -270,6 +197,13 @@ export const PROJECT_MEDIA: Record<string, ProjectMedia> = {
  * time and frame the subject inside it, exactly as a project card is cut to its own
  * 4:3, rather than leaving the crop to the browser.
  *
+ * Three of the slots below — the cube, the spider, and the collision engine — are the
+ * Math Explorations projects, moved here when that division was cut. They are the only
+ * entries recut from an existing 4:3 project card instead of an original capture, which
+ * is why each carries a note about what its square window costs: with no wider source to
+ * go back to, the crop is a choice between things already in the frame rather than a
+ * free one.
+ *
  * (An earlier version of the strip widened the tile to 16:9 on hover, which is why
  * this note used to say the opposite and ask for landscape. That effect is gone.)
  */
@@ -282,12 +216,6 @@ export interface MoreItem {
   /** Absent on a slot that is a still and never had a clip behind it. */
   src?: string;
   alt: string;
-  /**
-   * Marks a named slot that has no footage at all yet — the tile falls
-   * through to `MediaSlot`'s placeholder field, with an "In Progress" banner
-   * laid across it so the reserved slot reads as claimed rather than empty.
-   */
-  inProgress?: boolean;
 }
 
 export function moreCut(name: string, title: string, alt: string): MoreItem {
@@ -305,11 +233,6 @@ export function moreStill(name: string, title: string, alt: string): MoreItem {
     poster: url(`/media/more-${name}-card.jpg`),
     alt,
   };
-}
-
-/** A named slot reserved for a project with no footage yet. */
-export function moreProgress(title: string): MoreItem {
-  return { title, alt: '', inProgress: true };
 }
 
 export const MARQUEE: (MoreItem | null)[] = [
@@ -350,21 +273,28 @@ export const MARQUEE: (MoreItem | null)[] = [
     'A swerve-drive robot translating and spinning at once across a practice field, each wheel steering independently.',
   ),
 
-  /* 1920x1080 with the game sitting in the middle of a black field, so the square is
-     1080x1080 with 420px taken off each side — the maze, the score, and the lives row
-     all fall inside it and the black is the game's own background, not a bar. */
+  /* Recut from the retired project card rather than from the original capture, which
+     is not in the repo — 468x468 centred in that 624x468 frame, scaled to 720x720. The
+     cube's own bounding box is very nearly square and sits in the middle of the frame,
+     so the centre window takes it whole and the 78px lost from each side is the white
+     the renderer draws around it. Runs the card's full 13s. */
   moreCut(
-    'pac-man',
-    'Pac Man',
-    'A Pac-Man clone mid-round, the ghosts closing in while the maze empties of pellets.',
+    'rubiks-cube',
+    '3D Rendered Rubik’s Cube',
+    'A 3D Rubik’s cube built from scratch, rotating about its coordinate axes.',
   ),
 
-  /* 740x746, cropped to 740x740 off the top and bottom and scaled to 720x720.
-     Runs the source's full 12.6s from t=0 — no trim, the whole demo. */
+  /* Also recut from its retired 960x720 card. Cropped at x=30 rather than centred,
+     which is the one place a tile here departs from a plain centre crop: the spider
+     tracks x=36..744 over the clip, a span of 708 that fits inside 720 with room to
+     spare, but only if the window starts near the left edge. Centring it (x=120) would
+     have cut the spider off entirely during its approach, which is the part of the clip
+     worth watching. The cost is the far right of the terrain and the red marker where it
+     drifts past x=750. Runs the card's full 7.7s. */
   moreCut(
-    'google-snake',
-    'Google Snake',
-    'A Google Snake clone on its chequered board, the snake curled below an apple.',
+    'procedural-spider',
+    'Procedurally Animated Spider',
+    'A wireframe spider crossing stepped terrain, its legs re-planting one at a time as the ground height changes under it.',
   ),
 
   /* 740x742, so square costs two pixels of height. Runs the source end to end and rests
@@ -378,9 +308,25 @@ export const MARQUEE: (MoreItem | null)[] = [
     'A graphing calculator built from scratch: equations typed into an input panel, then the panel sliding away to the curves plotted from them.',
   ),
 
-  /* Reserved, not built yet — the tile shows the placeholder field with an
-     "In Progress" banner rather than a real clip. */
-  moreProgress('Sinusoidal Motion Controller'),
+  /* The one tile a square crop genuinely costs something. Recut from the retired
+     960x720 card, 720x720 at x=120. The chart strip runs the full width of that frame
+     as one continuous panel — there is no gutter between the three charts to cut on, so
+     every 720-wide window slices one of them, and this window slices the C4 Energy chart
+     at the left edge. x=120 is the measured least-bad: over the trimmed clip the two
+     circles span x=156..845, and of the five candidate windows it is the only one that
+     keeps both of them in frame throughout (the edge windows drop one for 15 of 41
+     sampled frames).
+
+     Trimmed to 6.5s of the card's 8.8s for the same reason. The circles separate
+     steadily after the impact, and past that mark the cyan one leaves any square window
+     — so the tail is the part of the clip where the tile would be showing one circle and
+     a lot of empty floor. What survives is the collision, the separation, and the chart
+     panel switching from energy to momentum, which is the whole of what the demo is. */
+  moreCut(
+    'physics-collision',
+    'Physics Collision Engine',
+    'Two circles falling and colliding in a 2D rigid-body sim, with live energy charts tracking kinetic and potential energy either side of the impact.',
+  ),
 ];
 
 /** The clip a project's card plays on hover, or null if it has no footage yet. */

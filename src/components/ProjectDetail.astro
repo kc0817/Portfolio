@@ -4,9 +4,18 @@ import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import PageIntro from './PageIntro.astro';
 import Derivation from './Derivation.astro';
+import Math from './Math.astro';
+import MediaSlot from './MediaSlot.astro';
+// `Derivation` imports this too, but a page can now carry equations without it.
+import 'katex/dist/katex.min.css';
 import { CATEGORY_META, sectionUrl, url } from '../lib/site';
 import { heroOf } from '../lib/projectMedia';
 import decodeRobots from '../assets/robotics/decode-robots.png';
+import brobert from '../assets/robotics/brobert.jpg';
+import homography from '../assets/robotics/homography.jpg';
+import collectingData from '../assets/research/collecting-data.png';
+import omrHardware from '../assets/research/hardware.png';
+import omrSoftware from '../assets/research/software-diagram.png';
 
 /**
  * The full project page body. It used to be shared by every project's own URL and
@@ -26,7 +35,6 @@ import decodeRobots from '../assets/robotics/decode-robots.png';
 const FIGURE = {
   robotics: 'trajectory',
   research: 'contours',
-  math: 'rays',
 } as const;
 
 interface Props {
@@ -78,8 +86,281 @@ const facts = [
  */
 const repo = data.links.find((l) => l.kind === 'repo');
 
-// The one project with hand-written page sections rather than just a summary.
-const isBallistic = project.id === 'ballistic-physics-solver';
+/**
+ * The projects whose Overview is hand-written rather than their frontmatter
+ * summary: a lead paragraph or two, the numbered components, and a photograph
+ * beside them. Everything else falls through to `data.summary` as one paragraph.
+ *
+ * `aspect` is stated per entry because these are unrelated photographs and the
+ * figure is never cropped — see the `.overview__figure` note below.
+ */
+const OVERVIEWS: Record<
+  string,
+  {
+    lead: string[];
+    stepsIntro?: string;
+    steps?: string[];
+    image: ImageMetadata;
+    alt: string;
+    aspect: string;
+  }
+> = {
+  autoomr: {
+    lead: [
+      "The optomotor reflex (OMR) is a subconscious head rotation present in the majority of complex sight-seeing animals, and the frequency of OMR stimulation can be used to quantify one's vision.",
+      'For my Hillman Academy summer project, I developed AutoOMR, a neural-network driven prototype to autonomously stimulate and detect OMR, and sold this prototype to a Stony Brook University lab for $12,000.',
+    ],
+    image: collectingData,
+    alt: 'A mouse positioned in the AutoOMR data-collection rig, framed by the rig hardware used to record its optomotor reflex response.',
+    aspect: '480 / 446',
+  },
+  'ballistic-physics-solver': {
+    lead: [
+      'For the 2025–2026 FTC & FRC season, I programmed a projectile-motion inspired shooting system to allow our robot to launch balls from anywhere on the field.',
+    ],
+    stepsIntro: 'This project consists of 5 main components:',
+    steps: [
+      'Use the goal position, robot position, and a desired impact angle to calculate a 3D launch vector that will launch the ball into the goal',
+      'Offset the launch vector by the robot velocity to allow shooting while moving',
+      'Calculate a target turret and hood angle to compensate for deviations in actual exit speed',
+      'Iteratively test the algorithm in simulation',
+      'Design responsive & accurate control systems for the shooter, turret, and hood',
+    ],
+    image: decodeRobots,
+    alt: 'Two photographs labelled 8393 FTC robot and 8393 FRC robot. The FTC robot is a compact black chassis with a shooter assembly and white omni wheels; the FRC robot is a larger black drivebase on a competition field scattered with yellow game balls.',
+    aspect: '432 / 664',
+  },
+  'vision-piece-collection': {
+    lead: [
+      'During the 2024–2025 season as part of FTC Team 22312, I developed a fully autonomous, vision detection and localization algorithm to grab blocks of a specific color — and reject blocks of the wrong color.',
+    ],
+    stepsIntro: 'This algorithm included 2 main components:',
+    steps: ['Locating every viewable block', 'Planning and executing subsystem movements'],
+    image: brobert,
+    alt: 'Team 22312’s FTC robot photographed from above on a competition field: a black chassis numbered 22312, with a scissor-linkage extension, a linear slide, and a yellow intake claw at the front.',
+    aspect: '1 / 1',
+  },
+};
+
+const overview = OVERVIEWS[project.id] ?? null;
+
+/**
+ * The numbered write-up sections below the Overview, in the same two-panel shape:
+ * a figure on one side and prose on the other. `imageFirst` puts the picture on
+ * the left, and `figureShare` is the fraction of the row the figure takes, so a
+ * wide diagram can have more than half without every section changing. A section
+ * with no `figure` is prose across the row instead.
+ *
+ * `body` is a list of blocks rather than a list of paragraphs so a section can set
+ * an equation or a pair of media columns between its paragraphs:
+ *   - `p`       a paragraph
+ *   - `eq`      a display equation typeset by `Math.astro`, with an optional
+ *               `label` above it and its symbol key — one row per symbol — below
+ *   - `columns` two equal columns of heading, media slot, and prose, for a pair
+ *               of alternatives that are read against each other
+ *
+ * A section can instead carry a `wideFigure`, which runs the prose across the row
+ * and sets the picture full width below it — for diagrams whose detail is lost at
+ * sidebar width. `n` is optional: AutoOMR's two sections are named parts of one
+ * tool rather than steps in an order, so they carry no number.
+ *
+ * The ballistic solver's numbered sections are `Derivation.astro` instead — that
+ * page's steps are a worked derivation and its own component already renders them.
+ */
+type Block =
+  /* `text` is a list when the paragraph carries a link: the strings are the run of
+     prose either side and the objects are the linked words. A plain paragraph stays
+     a plain string. */
+  | { kind: 'p'; text: string | (string | { label: string; href: string })[] }
+  | { kind: 'eq'; label?: string; tex: string; defs: { tex: string; text: string }[] }
+  | {
+      kind: 'columns';
+      items: {
+        title: string;
+        text: string;
+        /**
+         * As encoded — silent, and sized by its own dimensions so the box holds the
+         * clip's shape rather than cropping it to a slot. Absent leaves the column
+         * on `MediaSlot`'s empty state, which occupies the box the same way.
+         */
+        video?: { src: string; poster: string; width: number; height: number; alt: string };
+      }[];
+    }
+  /* A row of clips with nothing written around them — the same media treatment as
+     `columns` without the heading and prose each column there carries, for footage
+     that is the section's whole content rather than evidence for an argument. */
+  | {
+      kind: 'videos';
+      items: { src: string; poster: string; width: number; height: number; alt: string }[];
+    };
+
+const SECTIONS: Record<
+  string,
+  {
+    /* Split from the title so the number can be set the way the solver's steps set
+       theirs — mono, small, on its own hairline column — rather than typed into the
+       heading and rendered at heading size. */
+    n?: string;
+    title: string;
+    body: Block[];
+    figure?: {
+      image: ImageMetadata;
+      alt: string;
+      aspect: string;
+      imageFirst?: boolean;
+      figureShare?: number;
+    };
+    wideFigure?: {
+      image: ImageMetadata;
+      alt: string;
+      aspect: string;
+    };
+  }[]
+> = {
+  autoomr: [
+    {
+      title: 'Hardware',
+      body: [
+        {
+          kind: 'p',
+          text: "The role of this tool's hardware is to stimulate OMR. To do so, I designed a custom Optodrum — a tool typically costing tens of thousands of dollars — by displaying moving stripes onto 4 monitors placed in a square orientation, and distorting the stripes to make the square chamber appear circular at the mice's point of view.",
+        },
+      ],
+      wideFigure: {
+        image: omrHardware,
+        alt: 'The AutoOMR hardware: four monitors arranged in a square around a central chamber, each displaying moving stripes distorted so the square enclosure reads as a circular drum from the mouse’s point of view.',
+        aspect: '1465 / 763',
+      },
+    },
+    {
+      title: 'Software',
+      body: [
+        {
+          kind: 'p',
+          text: "The role of this tool's software is to detect OMR. To do this, I placed an overhead camera to record the mice from an aerial view, and then labeled 5000+ images to train 2 neural networks: Single Shot Multibox Detector (SSD), and Long-Short Term Memory model (LSTM). SSD is used to identify ear and tail locations, allowing me to compute the head angle vector. The head angle is fed into LSTM, which classifies every frame as OMR or non-OMR.",
+        },
+      ],
+      wideFigure: {
+        image: omrSoftware,
+        alt: 'A diagram of the AutoOMR detection pipeline: overhead camera frames feed a Single Shot Multibox Detector that locates the ears and tail, the resulting head angle vector is fed into an LSTM, and the LSTM classifies each frame as OMR or non-OMR.',
+        aspect: '1521 / 799',
+      },
+    },
+    {
+      title: 'Sample Trials',
+      body: [
+        {
+          kind: 'videos',
+          items: [
+            {
+              src: url('/media/omr-trial-detection.mp4'),
+              poster: url('/media/omr-trial-detection.jpg'),
+              width: 640,
+              height: 480,
+              alt: 'An overhead recording of a mouse in the chamber with the detection results drawn over it — the ear and tail boxes the SSD found, and the head angle vector computed from them.',
+            },
+            {
+              src: url('/media/omr-trial-chamber.mp4'),
+              poster: url('/media/omr-trial-chamber.jpg'),
+              /* 4:3, not the 16:9 it was shot at: the source carried 240px black
+                 pillars either side of the frame, cropped off at encode time so the
+                 box holds the picture rather than the bars. */
+              width: 960,
+              height: 720,
+              alt: 'A recording of a trial running in the Optodrum: the four monitors driving the moving stripes around the chamber while a mouse tracks them.',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  'vision-piece-collection': [
+    {
+      n: '1',
+      title: 'Vision + Localization',
+      body: [
+        {
+          kind: 'p',
+          text: "I tuned Limelight 3A's color detection pipeline to segment the image into blocks, and obtained the center pixel values of each block. To account for perspective projection, I calibrated a homographic transformation that converted pixel values into field coordinates. As a result, this pipeline gave me an ArrayList of field coordinates of all visible blocks.",
+        },
+      ],
+      figure: {
+        image: homography,
+        alt: 'Two camera frames side by side, labelled Before Homography — includes perspective distortion — and After Homography — almost no perspective distortion. The first looks down the field at an angle with yellow blocks foreshortened; the second is rectified to a flat overhead view.',
+        aspect: '1015 / 562',
+        imageFirst: true,
+        figureShare: 0.6,
+      },
+    },
+    {
+      n: '2',
+      title: 'Subsystem Movements',
+      body: [
+        {
+          kind: 'p',
+          text: 'To decide which block the robot should target, the robot computes a cost for each block, and select the block with the minimum cost',
+        },
+        {
+          kind: 'eq',
+          label: 'Cost function:',
+          tex: 'J = \\alpha \\sqrt{\\Delta x^{2} + \\Delta y^{2}} + \\beta \\left|\\tan^{-1}\\!\\left(\\frac{\\Delta y}{\\Delta x}\\right)\\right|',
+          defs: [
+            { tex: '\\alpha', text: 'distance weight' },
+            { tex: '\\beta', text: 'angle weight' },
+            {
+              tex: '\\Delta x,\\ \\Delta y',
+              text: 'block coordinates relative to the front of the robot',
+            },
+          ],
+        },
+        {
+          kind: 'p',
+          text: "To fully utilize the robot's sideways oriented spindles, I designed 2 types of collection modes",
+        },
+        {
+          kind: 'columns',
+          items: [
+            {
+              title: 'Forwards Collection',
+              text: 'If the necessary angle of rotation is less than a tuned threshold, directly rotate and extend to the block. This method contacts the block with the front facing spindles.',
+              video: {
+                src: url('/media/vision-forwards-collection.mp4'),
+                poster: url('/media/vision-forwards-collection.jpg'),
+                width: 720,
+                height: 720,
+                alt: 'The robot rotating straight at a block and extending into it, collecting it with the front facing spindles.',
+              },
+            },
+            {
+              title: 'Sideways Collection',
+              text: 'If the angle of rotation is greater than the tuned threshold, rotate to the threshold, extend the collector out, and then rotate the remaining angle. This method contacts the block using the sideways facing spindles.',
+              video: {
+                src: url('/media/vision-sideways-collection.mp4'),
+                poster: url('/media/vision-sideways-collection.jpg'),
+                width: 720,
+                height: 720,
+                alt: 'The robot rotating partway to a block, extending the collector, then turning the rest of the way to take the block with its sideways facing spindles.',
+              },
+            },
+          ],
+        },
+        {
+          kind: 'p',
+          text: [
+            'After computing all the calculations, I used the ',
+            {
+              label: 'Roadrunner library',
+              href: 'https://learnroadrunner.com/introduction.html#frequently-asked-questions',
+            },
+            ' to build pre-planned actions controlling each subsystem.',
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+const sections = SECTIONS[project.id] ?? [];
 
 // The arrows either side of the main image. The first project has no
 // previous neighbour and the last has no next one, so those sides point back
@@ -127,74 +408,223 @@ const nextNav = next
   }
 
   {/* The Overview, now its own hairline-separated section below the facts rail
-      rather than a block inside the intro. Every project gets its frontmatter
-      summary here; the ballistic solver gets its own longer opening instead,
-      because that page's summary still has to work as a card and a meta
+      rather than a block inside the intro. Most projects get their frontmatter
+      summary here; the two in `OVERVIEWS` get their own longer opening instead,
+      because those pages' summaries still have to work as a card and a meta
       description and this copy is far too long for either. */}
   <section class="wrap overview" aria-labelledby="overview-heading">
     <h2 id="overview-heading">Overview</h2>
 
     {
-      isBallistic ? (
-        <>
-          {/* The prose and the list share one column so the picture beside them
-              can top-align with the first line of the paragraph rather than
-              starting level with the list further down. */}
-          <div class="overview__row">
-            <div class="overview__main">
-              <div class="overview__lead">
-                <p>
-                  For the 2025–2026 FTC &amp; FRC season, I programmed a
-                  projectile-motion inspired shooting system to allow our robot to
-                  launch balls from anywhere on the field. To test this algorithm, I
-                  also set up a custom simulation to visualize the trajectories being
-                  calculated.
-                </p>
-                <p>This project consists of 5 main components:</p>
-              </div>
-
-              <ol class="overview__steps">
-                <li>
-                  Use the goal position, robot position, and a desired impact angle to
-                  calculate a 3D launch vector that will launch the ball into the goal
-                </li>
-                <li>
-                  Offset the launch vector by the robot velocity to allow shooting
-                  while moving
-                </li>
-                <li>
-                  Calculate a target turret and hood angle to compensate for
-                  deviations in actual exit speed
-                </li>
-                <li>Iteratively test the algorithm in simulation</li>
-                <li>
-                  Design responsive &amp; accurate control systems for the shooter,
-                  turret, and hood
-                </li>
-              </ol>
+      overview ? (
+        /* The prose and the list share one column so the picture beside them
+           can top-align with the first line of the paragraph rather than
+           starting level with the list further down. */
+        <div class="overview__row">
+          <div class="overview__main">
+            <div class="overview__lead">
+              {overview.lead.map((para) => (
+                <p>{para}</p>
+              ))}
+              {overview.stepsIntro && <p>{overview.stepsIntro}</p>}
             </div>
 
-            {/* Not a MediaSlot: this is a labelled two-panel figure, and every
-                `object-fit: cover` slot on the site would crop the captions off
-                it. It keeps its own 432×664 aspect and is never cropped. */}
-            <figure class="overview__figure">
-              <Image
-                src={decodeRobots}
-                alt="Two photographs labelled 8393 FTC robot and 8393 FRC robot. The FTC robot is a compact black chassis with a shooter assembly and white omni wheels; the FRC robot is a larger black drivebase on a competition field scattered with yellow game balls."
-                widths={[432, 864]}
-                sizes="(min-width: 46rem) 24rem, 90vw"
-                class="overview__img"
-              />
-            </figure>
+            {overview.steps && overview.steps.length > 0 && (
+              <ol class="overview__steps">
+                {overview.steps.map((step) => (
+                  <li>{step}</li>
+                ))}
+              </ol>
+            )}
           </div>
-        </>
+
+          {/* Not a MediaSlot: those all crop to fill, and these figures keep
+              their own aspect and are never cropped — the solver's photo
+              carries burnt-in labels a `cover` slot would cut off. */}
+          <figure class="overview__figure" style={`aspect-ratio: ${overview.aspect};`}>
+            <Image
+              src={overview.image}
+              alt={overview.alt}
+              widths={[432, 864]}
+              sizes="(min-width: 46rem) 24rem, 90vw"
+              class="overview__img"
+            />
+          </figure>
+        </div>
       ) : (
         <p class="overview__text">{data.summary}</p>
       )
     }
   </section>
 
-  {isBallistic && <Derivation />}
+  {
+    sections.map((section) => {
+      // The figure's share of the row, as two grid tracks. `fr`, not percentages:
+      // percentages plus the column gap would overflow the row, and unlike the
+      // `auto` track the Overview warns about, an `fr` track is resolved from the
+      // available space rather than from its content, so the figure's own
+      // `width: 100%` still has something definite to resolve against.
+      const share = section.figure?.figureShare ?? 0.5;
+      const figureTrack = `minmax(0, ${share.toFixed(2)}fr)`;
+      const textTrack = `minmax(0, ${(1 - share).toFixed(2)}fr)`;
+
+      const prose = (
+        <div class:list={['overview__main', 'step__prose', !section.figure && 'step__prose--full']}>
+          {section.body.map((block) =>
+            block.kind === 'p' ? (
+              <p>
+                {typeof block.text === 'string'
+                  ? block.text
+                  : block.text.map((part) =>
+                      typeof part === 'string' ? (
+                        part
+                      ) : (
+                        // prettier-ignore
+                        <a href={part.href} target="_blank" rel="noopener noreferrer">{part.label}</a>
+                      )
+                    )}
+              </p>
+            ) : block.kind === 'videos' ? (
+              /* Same row and same clip treatment as `columns`, minus the heading
+                 and prose — and each clip keeps the shape it was encoded in, so
+                 the 4:3 detection capture is not stretched to match the 16:9 one
+                 beside it. Silent and `controls`: nothing on this page plays
+                 until it is asked to. */
+              <div class="step__columns">
+                {block.items.map((item) => (
+                  <figure class="step__column-media">
+                    <video
+                      class="step__column-video"
+                      src={item.src}
+                      poster={item.poster}
+                      width={item.width}
+                      height={item.height}
+                      aria-label={item.alt}
+                      controls
+                      playsinline
+                      preload="metadata"
+                      disablepictureinpicture
+                    />
+                  </figure>
+                ))}
+              </div>
+            ) : block.kind === 'columns' ? (
+              <div class="step__columns">
+                {block.items.map((item) => (
+                  <div class="step__column">
+                    <h3 class="step__column-title">{item.title}</h3>
+                    {/* Written out rather than sent through `MediaSlot`, for the
+                        reason `Derivation`'s clips are: every mode that component
+                        offers starts playback for you, and these wait to be asked.
+                        A column with no clip yet still falls through to it. */}
+                    <figure
+                      class:list={[
+                        'step__column-media',
+                        !item.video && 'step__column-media--empty',
+                      ]}
+                    >
+                      {item.video ? (
+                        <video
+                          class="step__column-video"
+                          src={item.video.src}
+                          poster={item.video.poster}
+                          width={item.video.width}
+                          height={item.video.height}
+                          aria-label={item.video.alt}
+                          controls
+                          playsinline
+                          preload="metadata"
+                          disablepictureinpicture
+                        />
+                      ) : (
+                        <MediaSlot video={null} />
+                      )}
+                    </figure>
+                    <p>{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="step__eq">
+                {block.label && <p class="step__eq-label">{block.label}</p>}
+                <Math tex={block.tex} display />
+                {block.defs.length > 0 && (
+                  <dl class="step__defs">
+                    {block.defs.map((item) => (
+                      <div class="step__def">
+                        <dt>
+                          <Math tex={item.tex} />
+                        </dt>
+                        <dd>{item.text}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+            )
+          )}
+        </div>
+      );
+
+      return (
+        <section class="wrap overview" aria-label={section.title}>
+          <h2 class="step__title">
+            {section.n && <span class="step__n">{section.n}</span>}
+            {section.title}
+          </h2>
+
+          {section.figure ? (
+            <div
+              class:list={[
+                'overview__row',
+                'step__row',
+                section.figure.imageFirst && 'step__row--flip',
+              ]}
+              style={`--figure-track: ${figureTrack}; --text-track: ${textTrack};`}
+            >
+              {prose}
+
+              <figure
+                class="overview__figure step__figure"
+                style={`aspect-ratio: ${section.figure.aspect};`}
+              >
+                <Image
+                  src={section.figure.image}
+                  alt={section.figure.alt}
+                  widths={[640, 1015]}
+                  sizes="(min-width: 46rem) 55vw, 90vw"
+                  class="overview__img"
+                />
+              </figure>
+            </div>
+          ) : (
+            prose
+          )}
+
+          {/* Full width below the prose rather than beside it: both of AutoOMR's
+              pictures are diagrams whose labels stop being readable at the 24rem
+              sidebar the Overview's photograph sits in. Uncropped, like every
+              other figure on this page. */}
+          {section.wideFigure && (
+            <figure
+              class="overview__figure step__figure step__figure--wide"
+              style={`aspect-ratio: ${section.wideFigure.aspect};`}
+            >
+              <Image
+                src={section.wideFigure.image}
+                alt={section.wideFigure.alt}
+                widths={[768, 1536]}
+                sizes="(min-width: 46rem) 72rem, 92vw"
+                class="overview__img"
+              />
+            </figure>
+          )}
+        </section>
+      );
+    })
+  }
+
+  {project.id === 'ballistic-physics-solver' && <Derivation />}
 
   {
     (prev || next) && (
@@ -289,14 +719,14 @@ const nextNav = next
     max-width: 66ch;
   }
 
-  /* ---- Overview, ballistic solver only ------------------------------------ */
+  /* ---- Overview, hand-written pages only ---------------------------------- */
 
   .overview__lead p {
     font-size: var(--text-base);
     color: var(--ink-secondary);
   }
 
-  /* The second line — "This project consists of 6 main components:" — leads
+  /* The steps intro — "This algorithm included 3 main components:" — leads
      directly into the list below it, so it sits closer to that than to the
      paragraph it follows. */
   .overview__lead p + p {
@@ -351,18 +781,18 @@ const nextNav = next
     max-width: 54ch;
   }
 
-  /* The figure is the picture's own shape, 432×664, and nothing crops it: the
-     photo carries burnt-in "8393 FTC robot" / "8393 FRC robot" labels that any
-     `cover` slot on this site would cut off.
+  /* The figure is the picture's own shape — stated inline per project, since
+     these are unrelated photographs — and nothing crops it: the solver's photo
+     carries burnt-in "8393 FTC robot" / "8393 FRC robot" labels that any `cover`
+     slot on this site would cut off.
 
      Width and aspect-ratio are both explicit rather than inherited from the
      image, so the box is correct before the file arrives and nothing reflows when
-     it does. This value is the stacked, single-column case; the two-column rule
+     it does. This width is the stacked, single-column case; the two-column rule
      above overrides it to fill its own definite track. */
   .overview__figure {
     margin: 0;
     width: min(24rem, 100%);
-    aspect-ratio: 432 / 664;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
@@ -380,6 +810,189 @@ const nextNav = next
     object-fit: contain;
   }
 
+
+  /* ---- Numbered sections -------------------------------------------------- */
+
+  /* Same section chrome and same two-panel row as the Overview, with three
+     differences: the split is per-section rather than a fixed 24rem sidebar, the
+     figure can lead, and the figure fills its track instead of being capped. */
+  .step__figure {
+    width: 100%;
+    /* The homography frame is a white rectangle on the page ground, so the
+       Overview's lift reads as a smudge around it rather than as depth. */
+    box-shadow: none;
+  }
+
+  /* Overrides `.overview__figure`'s 24rem cap at every width — this figure is the
+     section's full-width plate, not a sidebar picture. The lift is dropped for the
+     same reason the homography frame drops it: both diagrams are light rectangles
+     on the page ground, where a shadow reads as a smudge rather than depth. */
+  .step__figure--wide {
+    width: 100%;
+    margin-top: var(--s-6);
+    box-shadow: none;
+  }
+
+  .step__prose p {
+    font-size: var(--text-base);
+    color: var(--ink-secondary);
+  }
+
+  /* One rhythm down the column whatever the blocks are — paragraph or equation —
+     rather than a margin per pairing. */
+  .step__prose > * + * {
+    margin-top: var(--s-5);
+  }
+
+  /* Equations are not prose and are not held to the prose measure — an equation
+     wider than 66ch scrolls in its own strip, which is what `Math` is built for.
+     This overrides `.overview__main > *`. */
+  .step__eq {
+    max-width: 100%;
+  }
+
+  /* The label introduces the equation directly, so it sits closer to it than the
+     equation sits to the paragraph above. */
+  .step__eq-label {
+    margin: 0 0 var(--s-3);
+  }
+
+  /* The key belongs to the equation above it, so it sits closer to that than the
+     equation sits to the paragraph that introduces it. */
+  .step__eq .step__defs {
+    margin-top: var(--s-4);
+  }
+
+  /* A section with no figure is prose across the whole row, so its blocks run the
+     full width rather than stopping at the measure a side-by-side column needs. */
+  .step__prose--full > * {
+    max-width: 100%;
+  }
+
+  /* The step number set the way the solver's steps set theirs — mono, small,
+     baseline-aligned, held on its own hairline column — so the two pages number
+     their steps identically. Only the number is borrowed: the heading keeps this
+     page's h2 size, so it still matches the Overview above it. */
+  .step__title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+  }
+
+  .step__n {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-label);
+    color: var(--ink-tertiary);
+    flex: none;
+    padding-right: var(--s-3);
+    border-right: 1px solid var(--rule);
+  }
+
+  /* Two alternatives read against each other, so equal tracks rather than tracks
+     sized from their contents — the comparison is the point, and a wider column
+     would read as the more important mode. Stacked below the breakpoint, where
+     side-by-side would leave each clip too small to show what it demonstrates. */
+  .step__columns {
+    display: grid;
+    gap: var(--s-6);
+  }
+
+  @media (min-width: 46rem) {
+    .step__columns {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--s-5);
+    }
+  }
+
+  /* Labels the mode, so it sits at the weight of a sub-heading rather than the
+     size of one — the same object `Derivation`'s panel headings are. */
+  .step__column-title {
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-bottom: var(--s-4);
+  }
+
+  /* The clip fills its column and is never cropped by the page: the framing was
+     settled at encode time — both were shot upright and cut down to the band that
+     holds the robot and the block field — so the box takes the shape the file has
+     rather than imposing one on it. */
+  .step__column-media {
+    margin: 0 0 var(--s-4);
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+
+  /* A clip that is a direct child of the row — the `videos` block — has no prose
+     under it to be spaced from, and the two clips differ in aspect, so each sits
+     at the top of the row rather than being stretched to the taller one's height. */
+  .step__columns > .step__column-media {
+    margin-bottom: 0;
+    align-self: start;
+  }
+
+  .step__column-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--ground-inverse);
+  }
+
+  /* A column with no clip yet has nothing to take a shape from, so the empty slot
+     states one — it should look like a considered surface, not a collapsed box. */
+  .step__column-media--empty {
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Rows of "symbol = meaning". A grid rather than inline text so the meanings
+     start on one edge, and `max-content` for the symbol column so Δx, Δy sets the
+     width and α does not sit in a gutter sized for nothing. */
+  .step__defs {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--s-2) var(--s-4);
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  /* Each pair is its own subgrid row, so a wrapped meaning cannot slip out of
+     line with its symbol — and the required `<div>` between `<dl>` and `<dt>`
+     does not become a layout box that breaks the grid. */
+  .step__def {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    align-items: baseline;
+  }
+
+  .step__defs dd {
+    margin: 0;
+    color: var(--ink-secondary);
+  }
+
+  /* The key is annotation, not an equation in its own right — the symbols read at
+     the size of the text they gloss. */
+  .step__defs dt :global(.math) {
+    font-size: 1em;
+  }
+
+  /* Stacked, the picture reads first when it is the section's lead — a diagram
+     the prose then explains, not an illustration of it. */
+  .step__row--flip .step__figure {
+    order: -1;
+  }
+
+  @media (min-width: 46rem) {
+    .step__row {
+      /* Overrides the Overview's `1fr 24rem`. The tracks come from the section's
+         own `figureShare`, figure track first when the figure leads. */
+      grid-template-columns: var(--text-track) var(--figure-track);
+    }
+
+    .step__row--flip {
+      grid-template-columns: var(--figure-track) var(--text-track);
+    }
+  }
 
   /* ---- Neighbours -------------------------------------------------------- */
 

@@ -66,7 +66,6 @@ if (orphans.length > 0) {
 const COLUMNS: Record<Category, number> = {
   robotics: 2,
   research: 2,
-  math: 3,
 };
 ---
 
@@ -156,14 +155,14 @@ const COLUMNS: Record<Category, number> = {
 
   /* One column on a phone, two once two cards can hold their 4:3 without going
      postage-stamp, then the row's own count.
-     Math is the only row that asks for three, so the second breakpoint is really
-     its breakpoint, and it is set by where a third column stops being worth having:
-     272px is the card floor this system already settled on (the auto-fill grid that
-     preceded these rows used `minmax(17rem, 1fr)`), and three columns clear it at
-     64rem but not at 52rem — at 900px they came out 244px, with the title band
-     eating two-fifths of each card. Below 64rem math wraps to two-plus-one instead.
-     An orphan on a half row is what wrapping looks like, and it is honest about the
-     count. */
+     Both remaining rows ask for two, so the 64rem rule currently resolves to the same
+     two columns the rule above it already set — it is the mechanism kept for a row that
+     wants more, not dead weight, and `--cols` is what a row would set to use it. The
+     breakpoint is where it is because of the row that did: Math Explorations asked for
+     three before it was cut, and 272px is the card floor this system settled on (the
+     auto-fill grid that preceded these rows used `minmax(17rem, 1fr)`). Three columns
+     clear it at 64rem but not at 52rem — at 900px they came out 244px, with the title
+     band eating two-fifths of each card. */
   .division__row {
     display: grid;
     grid-template-columns: 1fr;
