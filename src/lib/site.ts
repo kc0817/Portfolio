@@ -9,7 +9,7 @@ export const SITE = {
   name: 'Kevin Chen',
   descriptor: 'Purdue CS undergrad exploring robotics and computer science',
   school: 'Purdue University',
-  gradYear: 2029,
+  gradYear: 2030,
   email: 'kevinjkchen17@gmail.com',
   github: 'https://github.com/kc0817',
   linkedin: 'https://www.linkedin.com/in/kevin-chen229463/',
